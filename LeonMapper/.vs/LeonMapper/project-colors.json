@@ -1,0 +1,16 @@
+{
+  "Version": 1,
+  "ProjectMap": {
+    "4ca2865a-7b6e-416b-bce5-7b7d43f82889": {
+      "ProjectGuid": "4ca2865a-7b6e-416b-bce5-7b7d43f82889",
+      "DisplayName": "LeonMapper",
+      "ColorIndex": 0
+    },
+    "33007b4d-d292-435c-bef4-aa8bf03c7575": {
+      "ProjectGuid": "33007b4d-d292-435c-bef4-aa8bf03c7575",
+      "DisplayName": "LeonMapper.Test",
+      "ColorIndex": 1
+    }
+  },
+  "NextColorIndex": 2
+}
