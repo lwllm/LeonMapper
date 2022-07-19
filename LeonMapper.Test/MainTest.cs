@@ -11,15 +11,24 @@ namespace LeonMapper.Test
         [TestMethod]
         public void MapperTest()
         {
-            User user = new User
+            var user = new User
             {
                 Id = 11,
                 Name = "leon",
                 Address = "china"
             };
-            var newUser = Mapper.Map<User, UserNew>(user);
-            System.Console.WriteLine(user.ToString());
-            System.Console.WriteLine(newUser.ToString());
+            Role role = new Role()
+            {
+                RoleId = 22,
+                RoleName = "Role22",
+                test = "ttt"
+            };
+            // var userMapper = new Mapper<User, UserNew?>();
+            var roleMapper = new Mapper<Role, RoleNew?>();
+            // var newUser = userMapper.MapTo(user);
+            var newRole = roleMapper.MapTo(role);
+            // System.Console.WriteLine(newUser.ToString());
+            System.Console.WriteLine(newRole.ToString());
         }
 
         [TestMethod]
@@ -31,11 +40,22 @@ namespace LeonMapper.Test
                 Name = "leon",
                 Address = "china"
             };
-            var config = new MapperConfiguration(cfg => cfg.CreateMap<User, UserNew>());
+            Role role = new Role()
+            {
+                RoleId = 22,
+                RoleName = "Role22",
+                test = "ttt"
+            };
+            var config = new MapperConfiguration(cfg =>
+            {
+                cfg.CreateMap<User, UserNew>();
+                cfg.CreateMap<Role, RoleNew>();
+            });
             var mapper = config.CreateMapper();
-            Stopwatch sw = new Stopwatch();
+            var testCount = 1_0000_0000;
+            var sw = new Stopwatch();
             sw.Start();
-            for (int i = 0; i < 1_0000_0000; i++)
+            for (int i = 0; i < testCount; i++)
             {
                 var newUser = new UserNew
                 {
@@ -43,23 +63,38 @@ namespace LeonMapper.Test
                     Name = user.Name,
                     Address = user.Address
                 };
+                var newRole = new RoleNew()
+                {
+                    RoleId = role.RoleId,
+                    RoleName = role.RoleName,
+                    test = role.test
+                };
             }
+
             sw.Stop();
             System.Console.WriteLine($"{sw.ElapsedMilliseconds}");
 
+            //LeonMapper
             sw.Restart();
-            for (int i = 0; i < 1_0000_0000; i++)
+            var userMapper = new Mapper<User, UserNew?>();
+            var roleMapper = new Mapper<Role, RoleNew?>();
+            for (int i = 0; i < testCount; i++)
             {
-                var newUser = Mapper.Map<User, UserNew>(user);
+                var newUser = userMapper.MapTo(user);
+                var newRole = roleMapper.MapTo(role);
             }
+
             sw.Stop();
             System.Console.WriteLine($"{sw.ElapsedMilliseconds}");
 
+            //automapper
             sw.Restart();
-            for (int i = 0; i < 1_0000_0000; i++)
+            for (int i = 0; i < testCount; i++)
             {
                 UserNew newUser = mapper.Map<User, UserNew>(user);
+                RoleNew newRole = mapper.Map<Role, RoleNew>(role);
             }
+
             sw.Stop();
             System.Console.WriteLine($"{sw.ElapsedMilliseconds}");
         }

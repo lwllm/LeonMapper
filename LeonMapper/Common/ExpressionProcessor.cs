@@ -1,7 +1,6 @@
-﻿using LeonMapper.Common;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 
-namespace LeonMapper.Implement
+namespace LeonMapper.Common
 {
     internal static class ExpressionProcessor<TIn, TOut>
     {

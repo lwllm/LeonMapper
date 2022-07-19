@@ -1,17 +1,17 @@
-﻿using LeonMapper.Implement;
+﻿using LeonMapper.Common;
+using LeonMapper.Implement;
+using LeonMapper.Implement.Emit;
 
 namespace LeonMapper
 {
-    public class Mapper
+    public class Mapper<TIn, TOut> where TOut : class
     {
-        public static void Map<TIn, TOut>(TIn source, TOut target)
-        {
-            ExpressionProcessor<TIn, TOut>.Map(source, target);
-        }
+        // private readonly IProcessor<TIn, TOut?> _processor = new EmitProcessor<TIn, TOut?>();  
+        private readonly IProcessor<TIn, TOut?> _processor = new Processor.Expression.ExpressionProcessor<TIn, TOut>();
 
-        public static TOut Map<TIn, TOut>(TIn source)
+        public TOut? MapTo(TIn source)
         {
-            return ExpressionProcessor<TIn, TOut>.CreateAndMap(source);
+            return _processor.MapTo(source);
         }
     }
 }

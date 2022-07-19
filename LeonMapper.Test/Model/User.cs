@@ -2,6 +2,10 @@
 {
     public class User
     {
+        public User()
+        {
+            
+        }
         public int Id { get; set; }
         public string Name { get; set; }
         public string Address { get; set; }
@@ -14,6 +18,10 @@
 
     public class UserNew
     {
+        public UserNew()
+        {
+            
+        }
         public int Id { get; set; }
         public string Name { get; set; }
         public string Address { get; set; }

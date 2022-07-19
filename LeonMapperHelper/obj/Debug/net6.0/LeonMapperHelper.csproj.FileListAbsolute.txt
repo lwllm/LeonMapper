@@ -1,0 +1,12 @@
+E:\Projects\personal\LeonMapper\LeonMapperHelper\bin\Debug\net6.0\LeonMapperHelper.deps.json
+E:\Projects\personal\LeonMapper\LeonMapperHelper\bin\Debug\net6.0\LeonMapperHelper.dll
+E:\Projects\personal\LeonMapper\LeonMapperHelper\bin\Debug\net6.0\LeonMapperHelper.pdb
+E:\Projects\personal\LeonMapper\LeonMapperHelper\obj\Debug\net6.0\LeonMapperHelper.csproj.AssemblyReference.cache
+E:\Projects\personal\LeonMapper\LeonMapperHelper\obj\Debug\net6.0\LeonMapperHelper.GeneratedMSBuildEditorConfig.editorconfig
+E:\Projects\personal\LeonMapper\LeonMapperHelper\obj\Debug\net6.0\LeonMapperHelper.AssemblyInfoInputs.cache
+E:\Projects\personal\LeonMapper\LeonMapperHelper\obj\Debug\net6.0\LeonMapperHelper.AssemblyInfo.cs
+E:\Projects\personal\LeonMapper\LeonMapperHelper\obj\Debug\net6.0\LeonMapperHelper.csproj.CoreCompileInputs.cache
+E:\Projects\personal\LeonMapper\LeonMapperHelper\obj\Debug\net6.0\LeonMapperHelper.dll
+E:\Projects\personal\LeonMapper\LeonMapperHelper\obj\Debug\net6.0\refint\LeonMapperHelper.dll
+E:\Projects\personal\LeonMapper\LeonMapperHelper\obj\Debug\net6.0\LeonMapperHelper.pdb
+E:\Projects\personal\LeonMapper\LeonMapperHelper\obj\Debug\net6.0\ref\LeonMapperHelper.dll
