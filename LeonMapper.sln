@@ -7,8 +7,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LeonMapper", "LeonMapper\Le
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LeonMapper.Test", "LeonMapper.Test\LeonMapper.Test.csproj", "{33007B4D-D292-435C-BEF4-AA8BF03C7575}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LeonMapperHelper", "LeonMapperHelper\LeonMapperHelper.csproj", "{133571A2-AAE9-4212-B4C4-89EE09D0DCC7}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,10 +21,6 @@ Global
 		{33007B4D-D292-435C-BEF4-AA8BF03C7575}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{33007B4D-D292-435C-BEF4-AA8BF03C7575}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{33007B4D-D292-435C-BEF4-AA8BF03C7575}.Release|Any CPU.Build.0 = Release|Any CPU
-		{133571A2-AAE9-4212-B4C4-89EE09D0DCC7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{133571A2-AAE9-4212-B4C4-89EE09D0DCC7}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{133571A2-AAE9-4212-B4C4-89EE09D0DCC7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{133571A2-AAE9-4212-B4C4-89EE09D0DCC7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
