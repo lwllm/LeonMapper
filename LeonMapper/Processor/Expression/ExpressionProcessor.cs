@@ -39,7 +39,7 @@ public class ExpressionProcessor<TIn, TOut> : AbstractProcessor<TIn, TOut>
         CreateTargetObjectFunc = lambda.Compile();
     }
 
-    public override TOut? MapTo(TIn source)
+    public override TOut MapTo(TIn source)
     {
         return Equals(source, default(TIn)) ? default(TOut) : CreateTargetObjectFunc.Invoke(source);
     }

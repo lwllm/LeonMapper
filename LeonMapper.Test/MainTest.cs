@@ -17,18 +17,20 @@ namespace LeonMapper.Test
                 Name = "leon",
                 Address = "china"
             };
-            Role role = new Role()
-            {
-                RoleId = 22,
-                RoleName = "Role22",
-                test = "ttt"
-            };
-            // var userMapper = new Mapper<User, UserNew?>();
-            var roleMapper = new Mapper<Role, RoleNew?>();
-            // var newUser = userMapper.MapTo(user);
-            var newRole = roleMapper.MapTo(role);
-            // System.Console.WriteLine(newUser.ToString());
-            System.Console.WriteLine(newRole.ToString());
+            // Role role = new Role()
+            // {
+            //     RoleId = 22,
+            //     RoleName = "Role22",
+            //     test = "ttt"
+            // };
+            var userMapper = new Mapper<User, UserNew>();
+            // var roleMapper = new Mapper<Role, RoleNew>();
+            var newUser = userMapper.MapTo(user);
+            var newUser2 = userMapper.MapTo(user, ProcessTypeEnum.Emit);
+            // var newRole = roleMapper.MapTo(role);
+            System.Console.WriteLine(newUser.ToString());
+            System.Console.WriteLine(newUser2.ToString());
+            // System.Console.WriteLine(newRole.ToString());
         }
 
         [TestMethod]
@@ -51,8 +53,7 @@ namespace LeonMapper.Test
                 cfg.CreateMap<User, UserNew>();
                 cfg.CreateMap<Role, RoleNew>();
             });
-            var mapper = config.CreateMapper();
-            var testCount = 1_0000_0000;
+            var testCount = 1000_0000;
             var sw = new Stopwatch();
             sw.Start();
             for (int i = 0; i < testCount; i++)
@@ -87,6 +88,7 @@ namespace LeonMapper.Test
             sw.Stop();
             System.Console.WriteLine($"{sw.ElapsedMilliseconds}");
 
+            var mapper = config.CreateMapper();
             //automapper
             sw.Restart();
             for (int i = 0; i < testCount; i++)

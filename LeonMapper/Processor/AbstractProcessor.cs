@@ -5,7 +5,10 @@ namespace LeonMapper.Processor;
 
 public abstract class AbstractProcessor<TIn, TOut> : IProcessor<TIn, TOut>
 {
-    public abstract TOut? MapTo(TIn source);
+    public abstract TOut MapTo(TIn source);
+    /// <summary>
+    /// Key: TIn,Value: TOut
+    /// </summary>
     protected static readonly Dictionary<PropertyInfo, PropertyInfo> PropertyDictionary;
     protected static readonly Dictionary<FieldInfo, FieldInfo> FieldDictionary;
 
