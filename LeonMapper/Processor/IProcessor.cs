@@ -1,6 +1,6 @@
 ﻿namespace LeonMapper.Implement;
 
-public interface IProcessor<in TIn, out TOut>
+public interface IProcessor<in TInput, out TOutput>
 {
-    public TOut? MapTo(TIn source);
+    public TOutput MapTo(TInput input);
 }

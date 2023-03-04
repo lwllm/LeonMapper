@@ -1,4 +1,4 @@
-﻿namespace LeonMapper.Exception
+﻿namespace LeonMapper.Exceptions
 {
     public class AssertFailedException : System.Exception
     {

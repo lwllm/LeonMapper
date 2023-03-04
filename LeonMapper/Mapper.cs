@@ -1,26 +1,27 @@
-﻿using LeonMapper.Common;
-using LeonMapper.Implement;
-using LeonMapper.Implement.Emit;
+﻿using LeonMapper.Implement;
+using LeonMapper.Implement.EmitProcessor;
 
 namespace LeonMapper
 {
     public class Mapper<TIn, TOut> where TOut : class
     {
-        private readonly IProcessor<TIn, TOut?> _emitProcessor = new EmitProcessor<TIn, TOut?>();
+        private readonly IProcessor<TIn, TOut?> _emitProcessor = new EmitProcessor<TIn, TOut>();
 
         private readonly IProcessor<TIn, TOut?> _expressionProcessor =
-            new Processor.Expression.ExpressionProcessor<TIn, TOut>();
+            new Processor.ExpressionProcessor.ExpressionProcessor<TIn, TOut>();
 
-        public TOut? MapTo(TIn source)
+        public TOut MapTo(TIn source)
         {
-            return _expressionProcessor.MapTo(source);
+            return Equals(MapperConfig.GetDefaultProcessType(), ProcessTypeEnum.Expression)
+                ? _expressionProcessor.MapTo(source)
+                : _emitProcessor.MapTo(source);
         }
 
-        public TOut? MapTo(TIn source, ProcessTypeEnum processType)
+        public TOut MapTo(TIn source, ProcessTypeEnum processType)
         {
-            return Equals(processType, ProcessTypeEnum.Emit)
-                ? _emitProcessor.MapTo(source)
-                : _expressionProcessor.MapTo(source);
+            return Equals(processType, ProcessTypeEnum.Expression)
+                ? _expressionProcessor.MapTo(source)
+                : _emitProcessor.MapTo(source);
         }
     }
 }

@@ -11,49 +11,55 @@ namespace LeonMapper.Test
         [TestMethod]
         public void MapperTest()
         {
+            var role = new Role()
+            {
+                RoleId1 = 22,
+                RoleName = "Role22",
+                test = "ttt"
+            };
             var user = new User
             {
                 Id = 11,
+                StudentNumber = "123",
                 Name = "leon",
-                Address = "china"
+                Address = "china",
+                Role = role
             };
-            // Role role = new Role()
-            // {
-            //     RoleId = 22,
-            //     RoleName = "Role22",
-            //     test = "ttt"
-            // };
+
             var userMapper = new Mapper<User, UserNew>();
             // var roleMapper = new Mapper<Role, RoleNew>();
             var newUser = userMapper.MapTo(user);
-            var newUser2 = userMapper.MapTo(user, ProcessTypeEnum.Emit);
+            // var newUser2 = userMapper.MapTo(user, ProcessTypeEnum.Emit);
             // var newRole = roleMapper.MapTo(role);
             System.Console.WriteLine(newUser.ToString());
-            System.Console.WriteLine(newUser2.ToString());
+            // System.Console.WriteLine(newUser2.ToString());
             // System.Console.WriteLine(newRole.ToString());
         }
 
         [TestMethod]
         public void PerformanceTest()
         {
+            
+            Role role = new Role()
+            {
+                RoleId1 = 22,
+                RoleName = "Role22",
+                test = "ttt"
+            };
             User user = new User
             {
                 Id = 11,
+                StudentNumber = "123",
                 Name = "leon",
-                Address = "china"
-            };
-            Role role = new Role()
-            {
-                RoleId = 22,
-                RoleName = "Role22",
-                test = "ttt"
+                Address = "china",
+                Role = role
             };
             var config = new MapperConfiguration(cfg =>
             {
                 cfg.CreateMap<User, UserNew>();
                 cfg.CreateMap<Role, RoleNew>();
             });
-            var testCount = 1000_0000;
+            var testCount = 10000_0000;
             var sw = new Stopwatch();
             sw.Start();
             for (int i = 0; i < testCount; i++)
@@ -66,7 +72,7 @@ namespace LeonMapper.Test
                 };
                 var newRole = new RoleNew()
                 {
-                    RoleId = role.RoleId,
+                    RoleId2 = role.RoleId1,
                     RoleName = role.RoleName,
                     test = role.test
                 };
@@ -84,7 +90,7 @@ namespace LeonMapper.Test
                 var newUser = userMapper.MapTo(user);
                 var newRole = roleMapper.MapTo(role);
             }
-
+            
             sw.Stop();
             System.Console.WriteLine($"{sw.ElapsedMilliseconds}");
 

@@ -19,4 +19,4 @@ var newUser2 = userMapper.MapTo(user, ProcessTypeEnum.Emit);
 System.Console.WriteLine(newUser2.ToString());
 ```
 
-暂时只支持简单类型的转换，提供 **Expression** 和 **Emit** 两套实现
+暂时只支持同类型的转换，提供 **Expression** 和 **Emit** 两套实现

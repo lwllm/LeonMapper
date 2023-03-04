@@ -1,4 +1,4 @@
-﻿using LeonMapper.Exception;
+﻿using LeonMapper.Exceptions;
 
 namespace LeonMapper.Common
 {
@@ -8,7 +8,7 @@ namespace LeonMapper.Common
         {
             if (target == null)
             {
-                throw new AssertFailedException($"{nameof(target)} is not null!");
+                throw new AssertFailedException($"{nameof(target)} is null!");
             }
         }
 

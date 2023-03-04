@@ -3,9 +3,9 @@ using LeonMapper.Implement;
 
 namespace LeonMapper.Processor;
 
-public abstract class AbstractProcessor<TIn, TOut> : IProcessor<TIn, TOut>
+public abstract class AbstractProcessor<TInput, TOutput> : IProcessor<TInput, TOutput>
 {
-    public abstract TOut MapTo(TIn source);
+    public abstract TOutput MapTo(TInput input);
     /// <summary>
     /// Key: TIn,Value: TOut
     /// </summary>
@@ -14,14 +14,14 @@ public abstract class AbstractProcessor<TIn, TOut> : IProcessor<TIn, TOut>
 
     static AbstractProcessor()
     {
-        PropertyDictionary = GetPropertyDictionary(typeof(TIn), typeof(TOut));
-        FieldDictionary = GetFieldDictionary(typeof(TIn), typeof(TOut));
+        PropertyDictionary = GetPropertyDictionary(typeof(TInput), typeof(TOutput));
+        FieldDictionary = GetFieldDictionary(typeof(TInput), typeof(TOutput));
     }
 
-    private static Dictionary<PropertyInfo, PropertyInfo> GetPropertyDictionary(Type sourceType, Type targetType)
+    private static Dictionary<PropertyInfo, PropertyInfo> GetPropertyDictionary(Type inputType, Type outputType)
     {
-        var sourceProperties = sourceType.GetProperties().Where(p => p.CanRead).ToDictionary(p => p.Name, p => p);
-        var targetProperties = targetType.GetProperties().Where(p => p.CanWrite).ToDictionary(p => p.Name, p => p);
+        var sourceProperties = inputType.GetProperties().Where(p => p.CanRead).ToDictionary(p => p.Name, p => p);
+        var targetProperties = outputType.GetProperties().Where(p => p.CanWrite).ToDictionary(p => p.Name, p => p);
         var propertyDictionary = new Dictionary<PropertyInfo, PropertyInfo>(sourceProperties.Count);
         foreach (var sourcePropertiesKey in sourceProperties.Keys.Where(sourcePropertiesKey =>
                      targetProperties.ContainsKey(sourcePropertiesKey)))
@@ -32,10 +32,10 @@ public abstract class AbstractProcessor<TIn, TOut> : IProcessor<TIn, TOut>
         return propertyDictionary;
     }
 
-    private static Dictionary<FieldInfo, FieldInfo> GetFieldDictionary(Type sourceType, Type targetType)
+    private static Dictionary<FieldInfo, FieldInfo> GetFieldDictionary(Type inputType, Type outputType)
     {
-        var sourceFields = sourceType.GetFields().ToDictionary(f => f.Name, f => f);
-        var targetFields = targetType.GetFields().ToDictionary(f => f.Name, f => f);
+        var sourceFields = inputType.GetFields().ToDictionary(f => f.Name, f => f);
+        var targetFields = outputType.GetFields().ToDictionary(f => f.Name, f => f);
         var fieldDictionary = new Dictionary<FieldInfo, FieldInfo>(sourceFields.Count);
         foreach (var fieldsKey in sourceFields.Keys.Where(fieldsKey => targetFields.ContainsKey(fieldsKey)))
         {
