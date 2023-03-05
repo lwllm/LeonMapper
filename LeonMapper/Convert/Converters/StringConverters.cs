@@ -1,6 +1,6 @@
 ﻿using LeonMapper.Convert.Attributes;
 
-namespace LeonMapper.Converter.Converters;
+namespace LeonMapper.Convert.Converters;
 
 [ConverterTypes(typeof(string), typeof(int))]
 public class StringToIntConverter : IConverter<string, int>

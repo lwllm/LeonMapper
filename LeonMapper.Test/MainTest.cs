@@ -1,3 +1,4 @@
+using System;
 using AutoMapper;
 using LeonMapper.Test.Model;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -8,6 +9,11 @@ namespace LeonMapper.Test
     [TestClass]
     public class MainTest
     {
+        [TestMethod]
+        public void Test()
+        {
+        }
+
         [TestMethod]
         public void MapperTest()
         {
@@ -39,7 +45,6 @@ namespace LeonMapper.Test
         [TestMethod]
         public void PerformanceTest()
         {
-            
             Role role = new Role()
             {
                 RoleId1 = 22,
@@ -90,7 +95,7 @@ namespace LeonMapper.Test
                 var newUser = userMapper.MapTo(user);
                 var newRole = roleMapper.MapTo(role);
             }
-            
+
             sw.Stop();
             System.Console.WriteLine($"{sw.ElapsedMilliseconds}");
 

@@ -1,6 +1,6 @@
-﻿namespace LeonMapper.Converter;
+﻿namespace LeonMapper.Convert;
 
-public interface IConverter<TInput, TOutput>
+public interface IConverter<in TInput, out TOutput>
 {
     public TOutput Convert(TInput input);
 }

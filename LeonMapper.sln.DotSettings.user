@@ -3,5 +3,6 @@
   &lt;TestAncestor&gt;&#xD;
     &lt;TestId&gt;MSTest::33007B4D-D292-435C-BEF4-AA8BF03C7575::net6.0::LeonMapper.Test.MainTest.PerformanceTest&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;MSTest::33007B4D-D292-435C-BEF4-AA8BF03C7575::net6.0::LeonMapper.Test.MainTest.MapperTest&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;MSTest::33007B4D-D292-435C-BEF4-AA8BF03C7575::net6.0::LeonMapper.Test.MainTest.Test&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>

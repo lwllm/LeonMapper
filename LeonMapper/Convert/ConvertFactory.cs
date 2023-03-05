@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
 using LeonMapper.Convert.Attributes;
 
-namespace LeonMapper.Converter;
+namespace LeonMapper.Convert;
 
 public class ConvertFactory
 {
