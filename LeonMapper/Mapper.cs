@@ -1,5 +1,6 @@
-﻿using LeonMapper.Implement;
-using LeonMapper.Implement.EmitProcessor;
+﻿using LeonMapper.Processors;
+using LeonMapper.Processors.EmitProcessor;
+using LeonMapper.Processors.ExpressionProcessor;
 
 namespace LeonMapper
 {
@@ -8,7 +9,7 @@ namespace LeonMapper
         private readonly IProcessor<TIn, TOut?> _emitProcessor = new EmitProcessor<TIn, TOut>();
 
         private readonly IProcessor<TIn, TOut?> _expressionProcessor =
-            new Processor.ExpressionProcessor.ExpressionProcessor<TIn, TOut>();
+            new ExpressionProcessor<TIn, TOut>();
 
         public TOut MapTo(TIn source)
         {

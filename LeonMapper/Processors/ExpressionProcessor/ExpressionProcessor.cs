@@ -1,7 +1,7 @@
 ﻿using System.Linq.Expressions;
 using LeonMapper.Convert;
 
-namespace LeonMapper.Processor.ExpressionProcessor
+namespace LeonMapper.Processors.ExpressionProcessor
 {
     public class ExpressionProcessor<TInput, TOutput> : AbstractProcessor<TInput, TOutput>
     {

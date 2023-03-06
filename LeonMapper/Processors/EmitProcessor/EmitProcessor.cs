@@ -1,8 +1,7 @@
 ﻿using System.Reflection.Emit;
 using LeonMapper.Exceptions;
-using LeonMapper.Processor;
 
-namespace LeonMapper.Implement.EmitProcessor;
+namespace LeonMapper.Processors.EmitProcessor;
 
 public class EmitProcessor<TInput, TOutput> : AbstractProcessor<TInput, TOutput> where TOutput : class
 {
@@ -10,7 +9,7 @@ public class EmitProcessor<TInput, TOutput> : AbstractProcessor<TInput, TOutput>
 
     static EmitProcessor()
     {
-        var methodName = $"Map_{typeof(TInput).FullName}_to_{typeof(TOutput).FullName}_Method_{Guid.NewGuid():N}";
+        var methodName = $"Map_{typeof(TInput).FullName.Replace(".","_")}__to__{typeof(TOutput).FullName.Replace(".","_")}_Method_{Guid.NewGuid():N}";
         var method = new DynamicMethod(methodName, typeof(TOutput), new Type[] { typeof(TInput) });
         var generator = method.GetILGenerator();
         var outCtor = typeof(TOutput).GetConstructor(Type.EmptyTypes);

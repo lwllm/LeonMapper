@@ -1,4 +1,4 @@
-﻿namespace LeonMapper.Implement;
+﻿namespace LeonMapper.Processors;
 
 public interface IProcessor<in TInput, out TOutput>
 {

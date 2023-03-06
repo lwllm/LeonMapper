@@ -1,7 +1,6 @@
 ﻿using System.Reflection;
-using LeonMapper.Implement;
 
-namespace LeonMapper.Processor;
+namespace LeonMapper.Processors;
 
 public abstract class AbstractProcessor<TInput, TOutput> : IProcessor<TInput, TOutput>
 {
