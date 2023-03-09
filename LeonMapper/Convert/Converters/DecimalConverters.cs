@@ -121,15 +121,6 @@ public class DecimalToDoubleConverter : IConverter<decimal, double>
     }
 }
 
-
-public class DecimalToDecimalConverter : IConverter<decimal, decimal>
-{
-    public decimal Convert(decimal input)
-    {
-        return input;
-    }
-}
-
 public class DecimalToCharConverter : IConverter<decimal, char>
 {
     public char Convert(decimal input)
@@ -158,7 +149,8 @@ public class DecimalToIntPtrConverter : IConverter<decimal, IntPtr>
         {
             throw new OverflowException();
         }
-        else if (IntPtr.Size == 8 && (input < long.MinValue || input > long.MaxValue))
+
+        if (IntPtr.Size == 8 && (input < long.MinValue || input > long.MaxValue))
         {
             throw new OverflowException();
         }
@@ -174,7 +166,8 @@ public class DecimalToUIntPtrConverter : IConverter<decimal, UIntPtr>
         {
             throw new OverflowException();
         }
-        else if (UIntPtr.Size == 8 && (input < ulong.MinValue || input > ulong.MaxValue))
+
+        if (UIntPtr.Size == 8 && (input < ulong.MinValue || input > ulong.MaxValue))
         {
             throw new OverflowException();
         }
