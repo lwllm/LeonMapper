@@ -10,14 +10,6 @@ public class ByteToSByteConverter : IConverter<byte, sbyte>
     }
 }
 
-public class ByteToByteConverter : IConverter<byte, byte>
-{
-    public byte Convert(byte input)
-    {
-        return input;
-    }
-}
-
 public class ByteToShortConverter : IConverter<byte, short>
 {
     public short Convert(byte input)
