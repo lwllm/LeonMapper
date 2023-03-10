@@ -1,4 +1,6 @@
-﻿namespace LeonMapper.Convert.Converters;
+﻿using LeonMapper.Convert.Attributes;
+
+namespace LeonMapper.Convert.Converters;
 
 public class LongToSByteConverter : IConverter<long, sbyte>
 {
@@ -24,6 +26,7 @@ public class LongToByteConverter : IConverter<long, byte>
     }
 }
 
+[CommonConverter]
 public class LongToShortConverter : IConverter<long, short>
 {
     public short Convert(long input)
@@ -48,6 +51,7 @@ public class LongToUShortConverter : IConverter<long, ushort>
     }
 }
 
+[CommonConverter]
 public class LongToIntConverter : IConverter<long, int>
 {
     public int Convert(long input)
@@ -69,14 +73,6 @@ public class LongToUIntConverter : IConverter<long, uint>
             throw new OverflowException();
         }
         return (uint)input;
-    }
-}
-
-public class LongToLongConverter : IConverter<long, long>
-{
-    public long Convert(long input)
-    {
-        return input;
     }
 }
 
@@ -102,6 +98,7 @@ public class LongToFloatConverter : IConverter<long, float>
     }
 }
 
+[CommonConverter]
 public class LongToDoubleConverter : IConverter<long, double>
 {
     public double Convert(long input)
@@ -112,6 +109,7 @@ public class LongToDoubleConverter : IConverter<long, double>
     }
 }
 
+[CommonConverter]
 public class LongToDecimalConverter : IConverter<long, decimal>
 {
     public decimal Convert(long input)
@@ -169,5 +167,14 @@ public class LongToUIntPtrConverter : IConverter<long, UIntPtr>
         {
             return new UIntPtr((ulong)input);
         }
+    }
+}
+
+[CommonConverter]
+public class LongToStringConverter : IConverter<long, string>
+{
+    public string Convert(long input)
+    {
+        return input.ToString();
     }
 }

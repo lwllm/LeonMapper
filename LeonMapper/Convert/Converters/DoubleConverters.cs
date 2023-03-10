@@ -1,4 +1,6 @@
-﻿namespace LeonMapper.Convert.Converters;
+﻿using LeonMapper.Convert.Attributes;
+
+namespace LeonMapper.Convert.Converters;
 
 public class DoubleToSByteConverter : IConverter<double, sbyte>
 {
@@ -52,6 +54,7 @@ public class DoubleToUShortConverter : IConverter<double, ushort>
     }
 }
 
+[CommonConverter]
 public class DoubleToIntConverter : IConverter<double, int>
 {
     public int Convert(double input)
@@ -78,6 +81,7 @@ public class DoubleToUIntConverter : IConverter<double, uint>
     }
 }
 
+[CommonConverter]
 public class DoubleToLongConverter : IConverter<double, long>
 {
     public long Convert(double input)
@@ -117,14 +121,7 @@ public class DoubleToFloatConverter : IConverter<double, float>
     }
 }
 
-public class DoubleToDoubleConverter : IConverter<double, double>
-{
-    public double Convert(double input)
-    {
-        return input;
-    }
-}
-
+[CommonConverter]
 public class DoubleToDecimalConverter : IConverter<double, decimal>
 {
     public decimal Convert(double input)
@@ -188,6 +185,7 @@ public class DoubleToUIntPtrConverter : IConverter<double, UIntPtr>
     }
 }
 
+[CommonConverter]
 public class DoubleToStringConverter : IConverter<double, string>
 {
     public string Convert(double input)

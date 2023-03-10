@@ -1,4 +1,6 @@
-﻿namespace LeonMapper.Convert.Converters;
+﻿using LeonMapper.Convert.Attributes;
+
+namespace LeonMapper.Convert.Converters;
 
 public class IntPtrToSbyteConverter : IConverter<IntPtr, sbyte>
 {
@@ -124,6 +126,7 @@ public class IntPtrToUIntPtrConverter : IConverter<IntPtr, UIntPtr>
     }
 }
 
+[CommonConverter]
 public class IntPtrToStringConverter : IConverter<IntPtr, string>
 {
     public string Convert(IntPtr input)

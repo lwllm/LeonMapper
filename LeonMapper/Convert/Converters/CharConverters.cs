@@ -1,4 +1,6 @@
-﻿namespace LeonMapper.Convert.Converters;
+﻿using LeonMapper.Convert.Attributes;
+
+namespace LeonMapper.Convert.Converters;
 
 public class CharToSByteConverter : IConverter<char, sbyte>
 {
@@ -12,6 +14,7 @@ public class CharToSByteConverter : IConverter<char, sbyte>
     }
 }
 
+[CommonConverter]
 public class CharToByteConverter : IConverter<char, byte>
 {
     public byte Convert(char input)
@@ -24,6 +27,7 @@ public class CharToByteConverter : IConverter<char, byte>
     }
 }
 
+[CommonConverter]
 public class CharToShortConverter : IConverter<char, short>
 {
     public short Convert(char input)
@@ -40,6 +44,7 @@ public class CharToUShortConverter : IConverter<char, ushort>
     }
 }
 
+[CommonConverter]
 public class CharToIntConverter : IConverter<char, int>
 {
     public int Convert(char input)
@@ -95,14 +100,6 @@ public class CharToDecimalConverter : IConverter<char, decimal>
     }
 }
 
-public class CharToCharConverter : IConverter<char, char>
-{
-    public char Convert(char input)
-    {
-        return input;
-    }
-}
-
 public class CharToBoolConverter : IConverter<char, bool>
 {
     public bool Convert(char input)
@@ -147,6 +144,7 @@ public class CharToUIntPtrConverter : IConverter<char, UIntPtr>
     }
 }
 
+[CommonConverter]
 public class CharToStringConverter : IConverter<char, string>
 {
     public string Convert(char input)

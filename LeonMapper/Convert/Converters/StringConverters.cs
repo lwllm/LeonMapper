@@ -2,7 +2,7 @@
 
 namespace LeonMapper.Convert.Converters;
 
-[ConverterTypes(typeof(string), typeof(int))]
+[CommonConverter]
 public class StringToIntConverter : IConverter<string, int>
 {
     public int Convert(string input)
@@ -10,7 +10,7 @@ public class StringToIntConverter : IConverter<string, int>
         return int.Parse(input);
     }
 }
-[ConverterTypes(typeof(string), typeof(uint))]
+
 public class StringToUintConverter : IConverter<string, uint>
 {
     public uint Convert(string input)
@@ -18,8 +18,8 @@ public class StringToUintConverter : IConverter<string, uint>
         return uint.Parse(input);
     }
 }
-[ConverterTypes(typeof(string), typeof(short))]
 
+[CommonConverter]
 public class StringToShortConverter : IConverter<string, short>
 {
     public short Convert(string input)
@@ -27,7 +27,7 @@ public class StringToShortConverter : IConverter<string, short>
         return short.Parse(input);
     }
 }
-[ConverterTypes(typeof(string), typeof(ushort))]
+
 public class StringToUshortConverter : IConverter<string, ushort>
 {
     public ushort Convert(string input)
@@ -35,7 +35,8 @@ public class StringToUshortConverter : IConverter<string, ushort>
         return ushort.Parse(input);
     }
 }
-[ConverterTypes(typeof(string), typeof(long))]
+
+[CommonConverter]
 public class StringToLongConverter : IConverter<string, long>
 {
     public long Convert(string input)
@@ -43,7 +44,7 @@ public class StringToLongConverter : IConverter<string, long>
         return long.Parse(input);
     }
 }
-[ConverterTypes(typeof(string), typeof(ulong))]
+
 public class StringToUlongConverter : IConverter<string, ulong>
 {
     public ulong Convert(string input)
@@ -51,7 +52,8 @@ public class StringToUlongConverter : IConverter<string, ulong>
         return ulong.Parse(input);
     }
 }
-[ConverterTypes(typeof(string), typeof(double))]
+
+[CommonConverter]
 public class StringToDoubleConverter : IConverter<string, double>
 {
     public double Convert(string input)
@@ -59,7 +61,7 @@ public class StringToDoubleConverter : IConverter<string, double>
         return double.Parse(input);
     }
 }
-[ConverterTypes(typeof(string), typeof(float))]
+
 public class StringToFloatConverter : IConverter<string, float>
 {
     public float Convert(string input)
@@ -67,7 +69,8 @@ public class StringToFloatConverter : IConverter<string, float>
         return float.Parse(input);
     }
 }
-[ConverterTypes(typeof(string), typeof(decimal))]
+
+[CommonConverter]
 public class StringToDecimalConverter : IConverter<string, decimal>
 {
     public decimal Convert(string input)
@@ -75,7 +78,8 @@ public class StringToDecimalConverter : IConverter<string, decimal>
         return decimal.Parse(input);
     }
 }
-[ConverterTypes(typeof(string), typeof(DateTime))]
+
+[CommonConverter]
 public class StringToDateTimeConverter : IConverter<string, DateTime>
 {
     public DateTime Convert(string input)
@@ -84,14 +88,14 @@ public class StringToDateTimeConverter : IConverter<string, DateTime>
     }
 }
 
-public class StringToEnumConverter<TEnum> : IConverter<string, TEnum> where TEnum : struct, Enum
-{
-    public TEnum Convert(string input)
-    {
-        return Enum.Parse<TEnum>(input);
-    }
-}
-[ConverterTypes(typeof(string), typeof(sbyte))]
+// public class StringToEnumConverter<TEnum> : IConverter<string, TEnum> where TEnum : struct, Enum
+// {
+//     public TEnum Convert(string input)
+//     {
+//         return Enum.Parse<TEnum>(input);
+//     }
+// }
+
 public class StringToSbyteConverter : IConverter<string, sbyte>
 {
     public sbyte Convert(string input)
@@ -99,7 +103,7 @@ public class StringToSbyteConverter : IConverter<string, sbyte>
         return sbyte.Parse(input);
     }
 }
-[ConverterTypes(typeof(string), typeof(byte))]
+
 public class StringToByteConverter : IConverter<string, byte>
 {
     public byte Convert(string input)
@@ -107,7 +111,8 @@ public class StringToByteConverter : IConverter<string, byte>
         return byte.Parse(input);
     }
 }
-[ConverterTypes(typeof(string), typeof(bool))]
+
+[CommonConverter]
 public class StringToBoolConverter : IConverter<string, bool>
 {
     public bool Convert(string input)
@@ -115,7 +120,7 @@ public class StringToBoolConverter : IConverter<string, bool>
         return bool.Parse(input);
     }
 }
-[ConverterTypes(typeof(string), typeof(char))]
+
 public class StringToCharConverter : IConverter<string, char>
 {
     public char Convert(string input)
@@ -123,7 +128,7 @@ public class StringToCharConverter : IConverter<string, char>
         return char.Parse(input);
     }
 }
-[ConverterTypes(typeof(string), typeof(IntPtr))]
+
 public class StringToIntPtrConverter : IConverter<string, IntPtr>
 {
     public IntPtr Convert(string input)
@@ -131,7 +136,7 @@ public class StringToIntPtrConverter : IConverter<string, IntPtr>
         return IntPtr.Parse(input);
     }
 }
-[ConverterTypes(typeof(string), typeof(UIntPtr))]
+
 public class StringToUIntPtrConverter : IConverter<string, UIntPtr>
 {
     public UIntPtr Convert(string input)

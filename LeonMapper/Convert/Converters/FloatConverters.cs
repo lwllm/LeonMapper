@@ -1,4 +1,6 @@
-﻿namespace LeonMapper.Convert.Converters;
+﻿using LeonMapper.Convert.Attributes;
+
+namespace LeonMapper.Convert.Converters;
 
 public class FloatToSbyteConverter : IConverter<float, sbyte>
 {
@@ -104,6 +106,7 @@ public class FloatToUlongConverter : IConverter<float, ulong>
     }
 }
 
+[CommonConverter]
 public class FloatToDoubleConverter : IConverter<float, double>
 {
     public double Convert(float input)
@@ -112,6 +115,7 @@ public class FloatToDoubleConverter : IConverter<float, double>
     }
 }
 
+[CommonConverter]
 public class FloatToDecimalConverter : IConverter<float, decimal>
 {
     public decimal Convert(float input)
@@ -152,6 +156,7 @@ public class FloatToUIntPtrConverter : IConverter<float, UIntPtr>
     }
 }
 
+[CommonConverter]
 public class FloatToStringConverter : IConverter<float, string>
 {
     public string Convert(float input)

@@ -36,6 +36,18 @@ namespace LeonMapper.Processors.ExpressionProcessor
                     var convertExpression = Expression.Call(Expression.Constant(converter), convertMethod, property);
                     var memberBinding = Expression.Bind(propertyPair.Value, convertExpression);
                     memberBindingList.Add(memberBinding);
+                    
+                    // var convertMethod = converter.GetType().GetMethod("Convert");
+                    // var property = Expression.Property(sourceParameterExpression, propertyPair.Key);
+                    // var convertExpression = Expression.Call(Expression.Constant(converter), convertMethod, property);
+                    // var getAutoConvertMethod = typeof(MapperConfig).GetMethod("GetAutoConvert");
+                    // var getAutoConvertExpression = Expression.Call(getAutoConvertMethod);
+                    // var ifTrue = Expression.Bind(propertyPair.Value, convertExpression);
+                    // var ifFalse = Expression.Bind(propertyPair.Value, property);
+                    // var memberBinding = Expression.IfThenElse(getAutoConvertExpression,
+                    //     Expression.Block(new[] { ifTrue }),
+                    //     Expression.Block(new[] { ifFalse }));
+                    // memberBindingList.Add(memberBinding);
                 }
             }
 

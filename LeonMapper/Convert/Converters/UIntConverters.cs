@@ -1,4 +1,6 @@
-﻿namespace LeonMapper.Convert.Converters;
+﻿using LeonMapper.Convert.Attributes;
+
+namespace LeonMapper.Convert.Converters;
 
 public class UIntToSByteConverter : IConverter<uint, sbyte>
 {
@@ -57,14 +59,6 @@ public class UIntToIntConverter : IConverter<uint, int>
             throw new OverflowException();
         }
         return (int)input;
-    }
-}
-
-public class UIntToUIntConverter : IConverter<uint, uint>
-{
-    public uint Convert(uint input)
-    {
-        return input;
     }
 }
 
@@ -160,6 +154,7 @@ public class UIntToUIntPtrConverter : IConverter<uint, UIntPtr>
     }
 }
 
+[CommonConverter]
 public class UIntToStringConverter : IConverter<uint, string>
 {
     public string Convert(uint input)

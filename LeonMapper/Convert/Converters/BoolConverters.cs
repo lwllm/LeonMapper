@@ -1,4 +1,6 @@
-﻿namespace LeonMapper.Convert.Converters;
+﻿using LeonMapper.Convert.Attributes;
+
+namespace LeonMapper.Convert.Converters;
 
 public class BoolToSByteConverter : IConverter<bool, sbyte>
 {
@@ -16,6 +18,7 @@ public class BoolToByteConverter : IConverter<bool, byte>
     }
 }
 
+[CommonConverter]
 public class BoolToShortConverter : IConverter<bool, short>
 {
     public short Convert(bool input)
@@ -32,6 +35,7 @@ public class BoolToUShortConverter : IConverter<bool, ushort>
     }
 }
 
+[CommonConverter]
 public class BoolToIntConverter : IConverter<bool, int>
 {
     public int Convert(bool input)
@@ -112,6 +116,7 @@ public class BoolToUIntPtrConverter : IConverter<bool, UIntPtr>
     }
 }
 
+[CommonConverter]
 public class BoolToStringConverter : IConverter<bool, string>
 {
     public string Convert(bool input)

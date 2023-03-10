@@ -4,11 +4,12 @@ namespace LeonMapper.Processors;
 
 public abstract class AbstractProcessor<TInput, TOutput> : IProcessor<TInput, TOutput>
 {
-    public abstract TOutput MapTo(TInput input);
+    public abstract TOutput? MapTo(TInput input);
     /// <summary>
     /// Key: TIn,Value: TOut
     /// </summary>
     protected static readonly Dictionary<PropertyInfo, PropertyInfo> PropertyDictionary;
+
     protected static readonly Dictionary<FieldInfo, FieldInfo> FieldDictionary;
 
     static AbstractProcessor()

@@ -1,30 +1,38 @@
 ﻿using System.Reflection;
+using LeonMapper.Config;
 using LeonMapper.Convert.Attributes;
 
 namespace LeonMapper.Convert;
 
 public class ConvertFactory
 {
-    private static Dictionary<string, object> _converterDictionary =
+    private static readonly Dictionary<string, object> _commonConverterDictionary =
         new Dictionary<string, object>();
+    private static readonly Dictionary<string, object> _allConverterDictionary =
+        new Dictionary<string, object>();
+
+    private const string CONVERTER_METHOD_NAME = "Convert";
 
     static ConvertFactory()
     {
         var converterInterfaceType = typeof(IConverter<,>);
         var converters = Assembly.GetAssembly(typeof(ConvertFactory))
-            .GetTypes()
-            .Where(t =>
-                t.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == converterInterfaceType)
-                && t.GetCustomAttributes(typeof(ConverterTypesAttribute), false).Any());
+            .GetTypes().Where(t =>
+                t.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == converterInterfaceType));
         foreach (var converter in converters)
         {
-            var convertTypes = converter.GetCustomAttributes(typeof(ConverterTypesAttribute), false);
-            if (convertTypes != null && convertTypes.Count() == 1)
+            var isCommonConverter = converter.GetCustomAttributes(typeof(CommonConverterAttribute)).Any();
+            var convertMethod = converter.GetMethod(CONVERTER_METHOD_NAME);
+            if (convertMethod != null && convertMethod.GetParameters().Length == 1)
             {
-                var inputType = ((ConverterTypesAttribute)convertTypes[0]).InputType;
-                var outputType = ((ConverterTypesAttribute)convertTypes[0]).OutputType;
+                var inputType = convertMethod.GetParameters()[0].ParameterType;
+                var outputType = convertMethod.ReturnType;
                 var converterInstance = Activator.CreateInstance(converter);
-                _converterDictionary.Add($"{inputType.FullName}|{outputType.FullName}", converterInstance);
+                if (isCommonConverter)
+                {
+                    _commonConverterDictionary.Add($"{inputType.FullName}|{outputType.FullName}", converterInstance);
+                }
+                _allConverterDictionary.Add($"{inputType.FullName}|{outputType.FullName}", converterInstance);
             }
         }
     }
@@ -32,9 +40,19 @@ public class ConvertFactory
     public static IConverter<TInput, TOutput> GetConverter<TInput, TOutput>()
     {
         var key = $"{typeof(TInput).FullName}|{typeof(TOutput).FullName}";
-        if (_converterDictionary.ContainsKey(key))
+        if (MapperConfig.GetDefaultConverterScope() == ConverterScopeEnum.CommonConverters)
         {
-            return (IConverter<TInput, TOutput>)_converterDictionary[key];
+            if (_commonConverterDictionary.ContainsKey(key))
+            {
+                return (IConverter<TInput, TOutput>)_commonConverterDictionary[key];
+            }
+        }
+        else
+        {
+            if (_allConverterDictionary.ContainsKey(key))
+            {
+                return (IConverter<TInput, TOutput>)_commonConverterDictionary[key];
+            }
         }
 
         return null;

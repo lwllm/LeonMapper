@@ -1,4 +1,6 @@
-﻿namespace LeonMapper.Convert.Converters;
+﻿using LeonMapper.Convert.Attributes;
+
+namespace LeonMapper.Convert.Converters;
 
 public class ShortToSByteConverter : IConverter<short, sbyte>
 {
@@ -24,14 +26,6 @@ public class ShortToByteConverter : IConverter<short, byte>
     }
 }
 
-public class ShortToShortConverter : IConverter<short, short>
-{
-    public short Convert(short input)
-    {
-        return input;
-    }
-}
-
 public class ShortToUShortConverter : IConverter<short, ushort>
 {
     public ushort Convert(short input)
@@ -44,6 +38,7 @@ public class ShortToUShortConverter : IConverter<short, ushort>
     }
 }
 
+[CommonConverter]
 public class ShortToIntConverter : IConverter<short, int>
 {
     public int Convert(short input)
@@ -64,6 +59,7 @@ public class ShortToUIntConverter : IConverter<short, uint>
     }
 }
 
+[CommonConverter]
 public class ShortToLongConverter : IConverter<short, long>
 {
     public long Convert(short input)
@@ -92,6 +88,7 @@ public class ShortToFloatConverter : IConverter<short, float>
     }
 }
 
+[CommonConverter]
 public class ShortToDoubleConverter : IConverter<short, double>
 {
     public double Convert(short input)
@@ -100,6 +97,7 @@ public class ShortToDoubleConverter : IConverter<short, double>
     }
 }
 
+[CommonConverter]
 public class ShortToDecimalConverter : IConverter<short, decimal>
 {
     public decimal Convert(short input)
@@ -120,6 +118,7 @@ public class ShortToCharConverter : IConverter<short, char>
     }
 }
 
+[CommonConverter]
 public class ShortToBoolConverter : IConverter<short, bool>
 {
     public bool Convert(short input)
@@ -148,6 +147,7 @@ public class ShortToUIntPtrConverter : IConverter<short, UIntPtr>
     }
 }
 
+[CommonConverter]
 public class ShortToStringConverter : IConverter<short, string>
 {
     public string Convert(short input)

@@ -1,4 +1,5 @@
-﻿using LeonMapper.Processors;
+﻿using LeonMapper.Config;
+using LeonMapper.Processors;
 using LeonMapper.Processors.EmitProcessor;
 using LeonMapper.Processors.ExpressionProcessor;
 
@@ -11,16 +12,16 @@ namespace LeonMapper
         private readonly IProcessor<TIn, TOut?> _expressionProcessor =
             new ExpressionProcessor<TIn, TOut>();
 
-        public TOut MapTo(TIn source)
+        public TOut? MapTo(TIn source)
         {
-            return Equals(MapperConfig.GetDefaultProcessType(), ProcessTypeEnum.Expression)
+            return MapperConfig.GetDefaultProcessType() == ProcessTypeEnum.Expression
                 ? _expressionProcessor.MapTo(source)
                 : _emitProcessor.MapTo(source);
         }
 
-        public TOut MapTo(TIn source, ProcessTypeEnum processType)
+        public TOut? MapTo(TIn source, ProcessTypeEnum processType)
         {
-            return Equals(processType, ProcessTypeEnum.Expression)
+            return processType == ProcessTypeEnum.Expression
                 ? _expressionProcessor.MapTo(source)
                 : _emitProcessor.MapTo(source);
         }

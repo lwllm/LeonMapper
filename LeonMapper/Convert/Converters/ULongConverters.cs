@@ -1,4 +1,6 @@
-﻿namespace LeonMapper.Convert.Converters;
+﻿using LeonMapper.Convert.Attributes;
+
+namespace LeonMapper.Convert.Converters;
 
 public class ULongToSByteConverter : IConverter<ulong, sbyte>
 {
@@ -155,6 +157,7 @@ public class ULongToUIntPtrConverter : IConverter<ulong, UIntPtr>
     }
 }
 
+[CommonConverter]
 public class ULongToStringConverter : IConverter<ulong, string>
 {
     public string Convert(ulong input)

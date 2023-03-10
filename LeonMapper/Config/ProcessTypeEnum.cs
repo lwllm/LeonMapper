@@ -1,4 +1,4 @@
-﻿namespace LeonMapper;
+﻿namespace LeonMapper.Config;
 
 public enum ProcessTypeEnum
 {

@@ -32,7 +32,7 @@ namespace LeonMapper.Test
                 Role = role
             };
 
-            var userMapper = new Mapper<User, UserNew>();
+            var userMapper = new Mapper<User, UserNew?>();
             // var roleMapper = new Mapper<Role, RoleNew>();
             var newUser = userMapper.MapTo(user);
             // var newUser2 = userMapper.MapTo(user, ProcessTypeEnum.Emit);

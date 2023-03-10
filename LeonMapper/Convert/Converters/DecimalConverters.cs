@@ -1,4 +1,6 @@
-﻿namespace LeonMapper.Convert.Converters;
+﻿using LeonMapper.Convert.Attributes;
+
+namespace LeonMapper.Convert.Converters;
 
 public class DecimalToSbyteConverter : IConverter<decimal, sbyte>
 {
@@ -8,6 +10,7 @@ public class DecimalToSbyteConverter : IConverter<decimal, sbyte>
         {
             throw new OverflowException();
         }
+
         return (sbyte)input;
     }
 }
@@ -20,10 +23,12 @@ public class DecimalToByteConverter : IConverter<decimal, byte>
         {
             throw new OverflowException();
         }
+
         return (byte)input;
     }
 }
 
+[CommonConverter]
 public class DecimalToShortConverter : IConverter<decimal, short>
 {
     public short Convert(decimal input)
@@ -32,6 +37,7 @@ public class DecimalToShortConverter : IConverter<decimal, short>
         {
             throw new OverflowException();
         }
+
         return (short)input;
     }
 }
@@ -44,10 +50,12 @@ public class DecimalToUshortConverter : IConverter<decimal, ushort>
         {
             throw new OverflowException();
         }
+
         return (ushort)input;
     }
 }
 
+[CommonConverter]
 public class DecimalToIntConverter : IConverter<decimal, int>
 {
     public int Convert(decimal input)
@@ -56,6 +64,7 @@ public class DecimalToIntConverter : IConverter<decimal, int>
         {
             throw new OverflowException();
         }
+
         return (int)input;
     }
 }
@@ -68,10 +77,12 @@ public class DecimalToUintConverter : IConverter<decimal, uint>
         {
             throw new OverflowException();
         }
+
         return (uint)input;
     }
 }
 
+[CommonConverter]
 public class DecimalToLongConverter : IConverter<decimal, long>
 {
     public long Convert(decimal input)
@@ -80,6 +91,7 @@ public class DecimalToLongConverter : IConverter<decimal, long>
         {
             throw new OverflowException();
         }
+
         return (long)input;
     }
 }
@@ -92,6 +104,7 @@ public class DecimalToUlongConverter : IConverter<decimal, ulong>
         {
             throw new OverflowException();
         }
+
         return (ulong)input;
     }
 }
@@ -104,11 +117,12 @@ public class DecimalToFloatConverter : IConverter<decimal, float>
         {
             throw new OverflowException();
         }
+
         return (float)input;
     }
 }
 
-
+[CommonConverter]
 public class DecimalToDoubleConverter : IConverter<decimal, double>
 {
     public double Convert(decimal input)
@@ -117,6 +131,7 @@ public class DecimalToDoubleConverter : IConverter<decimal, double>
         {
             throw new OverflowException();
         }
+
         return (double)input;
     }
 }
@@ -129,6 +144,7 @@ public class DecimalToCharConverter : IConverter<decimal, char>
         {
             throw new OverflowException();
         }
+
         return (char)input;
     }
 }
@@ -154,6 +170,7 @@ public class DecimalToIntPtrConverter : IConverter<decimal, IntPtr>
         {
             throw new OverflowException();
         }
+
         return (IntPtr)(long)input;
     }
 }
@@ -171,10 +188,12 @@ public class DecimalToUIntPtrConverter : IConverter<decimal, UIntPtr>
         {
             throw new OverflowException();
         }
+
         return (UIntPtr)(ulong)input;
     }
 }
 
+[CommonConverter]
 public class DecimalToStringConverter : IConverter<decimal, string>
 {
     public string Convert(decimal input)

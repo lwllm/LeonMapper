@@ -1,4 +1,6 @@
-﻿namespace LeonMapper.Convert.Converters;
+﻿using LeonMapper.Convert.Attributes;
+
+namespace LeonMapper.Convert.Converters;
 
 public class UShortToSByteConverter : IConverter<ushort, sbyte>
 {
@@ -33,14 +35,6 @@ public class UShortToShortConverter : IConverter<ushort, short>
             throw new OverflowException();
         }
         return (short)input;
-    }
-}
-
-public class UShortToUShortConverter : IConverter<ushort, ushort>
-{
-    public ushort Convert(ushort input)
-    {
-        return input;
     }
 }
 
@@ -140,6 +134,7 @@ public class UShortToUIntPtrConverter : IConverter<ushort, UIntPtr>
     }
 }
 
+[CommonConverter]
 public class UShortToStringConverter : IConverter<ushort, string>
 {
     public string Convert(ushort input)
