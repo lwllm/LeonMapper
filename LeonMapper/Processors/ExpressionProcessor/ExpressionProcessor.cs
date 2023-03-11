@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using LeonMapper.Config;
 using LeonMapper.Convert;
 
 namespace LeonMapper.Processors.ExpressionProcessor
@@ -10,16 +11,16 @@ namespace LeonMapper.Processors.ExpressionProcessor
         static ExpressionProcessor()
         {
             var sourceParameterExpression =
-                System.Linq.Expressions.Expression.Parameter(typeof(TInput), "pIn");
+                Expression.Parameter(typeof(TInput), "pIn");
             var memberBindingList = new List<MemberBinding>();
             foreach (var propertyPair in PropertyDictionary)
             {
                 if (propertyPair.Key.PropertyType == propertyPair.Value.PropertyType)
                 {
                     var property =
-                        System.Linq.Expressions.Expression.Property(sourceParameterExpression,
+                        Expression.Property(sourceParameterExpression,
                             propertyPair.Key);
-                    var memberBinding = System.Linq.Expressions.Expression.Bind(propertyPair.Value, property);
+                    var memberBinding = Expression.Bind(propertyPair.Value, property);
                     memberBindingList.Add(memberBinding);
                 }
                 else
@@ -31,22 +32,21 @@ namespace LeonMapper.Processors.ExpressionProcessor
                     {
                         continue;
                     }
-                    var convertMethod = converter.GetType().GetMethod("Convert");
-                    var property = Expression.Property(sourceParameterExpression, propertyPair.Key);
-                    var convertExpression = Expression.Call(Expression.Constant(converter), convertMethod, property);
-                    var memberBinding = Expression.Bind(propertyPair.Value, convertExpression);
-                    memberBindingList.Add(memberBinding);
-                    
                     // var convertMethod = converter.GetType().GetMethod("Convert");
                     // var property = Expression.Property(sourceParameterExpression, propertyPair.Key);
                     // var convertExpression = Expression.Call(Expression.Constant(converter), convertMethod, property);
-                    // var getAutoConvertMethod = typeof(MapperConfig).GetMethod("GetAutoConvert");
-                    // var getAutoConvertExpression = Expression.Call(getAutoConvertMethod);
-                    // var ifTrue = Expression.Bind(propertyPair.Value, convertExpression);
-                    // var ifFalse = Expression.Bind(propertyPair.Value, property);
-                    // var memberBinding = Expression.IfThenElse(getAutoConvertExpression,
-                    //     Expression.Block(new[] { ifTrue }),
-                    //     Expression.Block(new[] { ifFalse }));
+                    // var memberBinding = Expression.Bind(propertyPair.Value, convertExpression);
+                    // memberBindingList.Add(memberBinding);
+
+                    var convertMethod = converter.GetType().GetMethod("Convert");
+                    var property = Expression.Property(sourceParameterExpression, propertyPair.Key);
+                    var convertExpression = Expression.Call(Expression.Constant(converter), convertMethod, property);
+                    var getAutoConvertMethod = typeof(MapperConfig).GetMethod("GetAutoConvert");
+                    var getAutoConvertExpression = Expression.Call(getAutoConvertMethod);
+                    var ifTrue = Expression.Bind(propertyPair.Value, convertExpression);
+                    var ifFalse = Expression.Bind(propertyPair.Value, property);
+                    var memberBinding = Expression.IfThenElse(getAutoConvertExpression,
+                        ifTrue.Expression, ifFalse.Expression);
                     // memberBindingList.Add(memberBinding);
                 }
             }
@@ -56,16 +56,16 @@ namespace LeonMapper.Processors.ExpressionProcessor
                 if (fieldPare.Key.FieldType == fieldPare.Value.FieldType)
                 {
                     var field =
-                        System.Linq.Expressions.Expression.Field(sourceParameterExpression, fieldPare.Key);
-                    var memberBinding = System.Linq.Expressions.Expression.Bind(fieldPare.Value, field);
+                        Expression.Field(sourceParameterExpression, fieldPare.Key);
+                    var memberBinding = Expression.Bind(fieldPare.Value, field);
                     memberBindingList.Add(memberBinding);
                 }
             }
 
             var memberInitExpression =
-                System.Linq.Expressions.Expression.MemberInit(System.Linq.Expressions.Expression.New(typeof(TOutput)),
+                Expression.MemberInit(Expression.New(typeof(TOutput)),
                     memberBindingList.ToArray());
-            var lambda = System.Linq.Expressions.Expression.Lambda<Func<TInput, TOutput>>(
+            var lambda = Expression.Lambda<Func<TInput, TOutput>>(
                 memberInitExpression, new ParameterExpression[]
                 {
                     sourceParameterExpression
