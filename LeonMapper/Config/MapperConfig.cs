@@ -21,17 +21,17 @@ public class MapperConfig
         _autoConverter = autoConvert;
     }
 
-    internal static ProcessTypeEnum GetDefaultProcessType()
+    public static ProcessTypeEnum GetDefaultProcessType()
     {
         return _defaultProcessType;
     }
 
-    internal static ConverterScopeEnum GetDefaultConverterScope()
+    public static ConverterScopeEnum GetDefaultConverterScope()
     {
         return _defaultConverterScope;
     }
 
-    internal static bool GetAutoConvert()
+    public static bool GetAutoConvert()
     {
         return _autoConverter;
     }

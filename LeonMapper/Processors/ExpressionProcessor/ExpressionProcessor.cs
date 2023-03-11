@@ -32,11 +32,6 @@ namespace LeonMapper.Processors.ExpressionProcessor
                     {
                         continue;
                     }
-                    // var convertMethod = converter.GetType().GetMethod("Convert");
-                    // var property = Expression.Property(sourceParameterExpression, propertyPair.Key);
-                    // var convertExpression = Expression.Call(Expression.Constant(converter), convertMethod, property);
-                    // var memberBinding = Expression.Bind(propertyPair.Value, convertExpression);
-                    // memberBindingList.Add(memberBinding);
 
                     var convertMethod = converter.GetType().GetMethod("Convert");
                     var property = Expression.Property(sourceParameterExpression, propertyPair.Key);
@@ -44,10 +39,12 @@ namespace LeonMapper.Processors.ExpressionProcessor
                     var getAutoConvertMethod = typeof(MapperConfig).GetMethod("GetAutoConvert");
                     var getAutoConvertExpression = Expression.Call(getAutoConvertMethod);
                     var ifTrue = Expression.Bind(propertyPair.Value, convertExpression);
-                    var ifFalse = Expression.Bind(propertyPair.Value, property);
-                    var memberBinding = Expression.IfThenElse(getAutoConvertExpression,
+                    var ifFalse = Expression.Bind(propertyPair.Value, Expression.Default(propertyPair.Value.PropertyType));
+                    var conditionalExpression = Expression.IfThenElse(getAutoConvertExpression,
                         ifTrue.Expression, ifFalse.Expression);
-                    // memberBindingList.Add(memberBinding);
+                    var memberExpression = Expression.Condition(getAutoConvertExpression, ifTrue.Expression, ifFalse.Expression, propertyPair.Value.PropertyType);
+                    var memberBinding = Expression.Bind(propertyPair.Value, memberExpression);
+                    memberBindingList.Add(memberBinding);
                 }
             }
 
@@ -66,10 +63,7 @@ namespace LeonMapper.Processors.ExpressionProcessor
                 Expression.MemberInit(Expression.New(typeof(TOutput)),
                     memberBindingList.ToArray());
             var lambda = Expression.Lambda<Func<TInput, TOutput>>(
-                memberInitExpression, new ParameterExpression[]
-                {
-                    sourceParameterExpression
-                });
+                memberInitExpression, sourceParameterExpression);
             CreateTargetObjectFunc = lambda.Compile();
         }
 
