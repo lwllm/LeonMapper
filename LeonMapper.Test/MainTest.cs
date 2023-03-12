@@ -10,8 +10,30 @@ namespace LeonMapper.Test
     public class MainTest
     {
         [TestMethod]
-        public void Test()
+        public void IsPrimitiveTest()
         {
+            // 整数类型：sbyte, byte, short, ushort, int, uint, long, ulong
+            // 浮点数类型：float, double, decimal
+            // 字符类型：char
+            // 布尔类型：bool
+            // 指针类型：IntPtr, UIntPtr
+            var types = new Type[]
+            {
+                typeof(sbyte),
+                typeof(byte),
+                typeof(short),
+                typeof(ushort),
+                typeof(int),
+                typeof(uint),
+                typeof(long),
+                typeof(ulong), typeof(float), typeof(double), typeof(decimal),
+                typeof(char), typeof(bool), typeof(IntPtr), typeof(UIntPtr),
+                typeof(string)
+            };
+            foreach (var type in types)
+            {
+                Console.WriteLine($"{type.Name} IsPrimitive : {type.IsPrimitive}");
+            }
         }
 
         [TestMethod]
@@ -40,6 +62,15 @@ namespace LeonMapper.Test
             System.Console.WriteLine(newUser.ToString());
             // System.Console.WriteLine(newUser2.ToString());
             // System.Console.WriteLine(newRole.ToString());
+
+            var config = new MapperConfiguration(cfg =>
+            {
+                cfg.CreateMap<User, UserNew>();
+                cfg.CreateMap<Role, RoleNew>();
+            });
+            var mapper = config.CreateMapper();
+            var newUser2 = mapper.Map<UserNew>(user);
+            System.Console.WriteLine(newUser2.ToString());
         }
 
         [TestMethod]
@@ -73,7 +104,8 @@ namespace LeonMapper.Test
                 {
                     Id = user.Id,
                     Name = user.Name,
-                    Address = user.Address
+                    Address = user.Address,
+                    StudentNumber = System.Convert.ToInt32(user.StudentNumber),
                 };
                 var newRole = new RoleNew()
                 {

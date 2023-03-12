@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using System.Reflection;
 using LeonMapper.Config;
 using LeonMapper.Convert;
 
@@ -15,36 +16,65 @@ namespace LeonMapper.Processors.ExpressionProcessor
             var memberBindingList = new List<MemberBinding>();
             foreach (var propertyPair in PropertyDictionary)
             {
-                if (propertyPair.Key.PropertyType == propertyPair.Value.PropertyType)
+                if (propertyPair.Key.CanRead && propertyPair.Value.CanWrite)
                 {
-                    var property =
-                        Expression.Property(sourceParameterExpression,
-                            propertyPair.Key);
-                    var memberBinding = Expression.Bind(propertyPair.Value, property);
-                    memberBindingList.Add(memberBinding);
-                }
-                else
-                {
-                    var converterType = typeof(ConvertFactory).GetMethod("GetConverter")
-                        .MakeGenericMethod(propertyPair.Key.PropertyType, propertyPair.Value.PropertyType);
-                    var converter = converterType.Invoke(null, null);
-                    if (converter == null)
+                    if (propertyPair.Key.PropertyType == propertyPair.Value.PropertyType)
                     {
-                        continue;
+                        var property =
+                            Expression.Property(sourceParameterExpression,
+                                propertyPair.Key);
+                        var memberBinding = Expression.Bind(propertyPair.Value, property);
+                        memberBindingList.Add(memberBinding);
                     }
+                    else
+                    {
+                        if (InputAndOutputAreBothBaseTypes(propertyPair.Key.PropertyType,
+                                propertyPair.Value.PropertyType))
+                        {
+                            var baseTypeConverterType = typeof(ConvertFactory)
+                                .GetMethod(GET_THE_BASE_TYPE_CONVERTER_METHOD_NAME)
+                                .MakeGenericMethod(propertyPair.Key.PropertyType, propertyPair.Value.PropertyType);
+                            var baseTypeConverter = baseTypeConverterType.Invoke(null, null);
+                            if (baseTypeConverter == null)
+                            {
+                                continue;
+                            }
 
-                    var convertMethod = converter.GetType().GetMethod("Convert");
-                    var property = Expression.Property(sourceParameterExpression, propertyPair.Key);
-                    var convertExpression = Expression.Call(Expression.Constant(converter), convertMethod, property);
-                    var getAutoConvertMethod = typeof(MapperConfig).GetMethod("GetAutoConvert");
-                    var getAutoConvertExpression = Expression.Call(getAutoConvertMethod);
-                    var ifTrue = Expression.Bind(propertyPair.Value, convertExpression);
-                    var ifFalse = Expression.Bind(propertyPair.Value, Expression.Default(propertyPair.Value.PropertyType));
-                    var conditionalExpression = Expression.IfThenElse(getAutoConvertExpression,
-                        ifTrue.Expression, ifFalse.Expression);
-                    var memberExpression = Expression.Condition(getAutoConvertExpression, ifTrue.Expression, ifFalse.Expression, propertyPair.Value.PropertyType);
-                    var memberBinding = Expression.Bind(propertyPair.Value, memberExpression);
-                    memberBindingList.Add(memberBinding);
+                            var baseTypeConvertMethod = baseTypeConverter.GetType().GetMethod(CONVERT_METHOD_NAME);
+                            var property = Expression.Property(sourceParameterExpression, propertyPair.Key);
+                            var convertExpression = Expression.Call(Expression.Constant(baseTypeConverter),
+                                baseTypeConvertMethod, property);
+                            var getAutoConvertMethod =
+                                typeof(MapperConfig).GetMethod(GET_AUTO_CONVERT_CONFIG_METHOD_NAME);
+                            var getAutoConvertExpression = Expression.Call(getAutoConvertMethod);
+                            var ifTrue = Expression.Bind(propertyPair.Value, convertExpression);
+                            var ifFalse = Expression.Bind(propertyPair.Value,
+                                Expression.Default(propertyPair.Value.PropertyType));
+                            var memberExpression = Expression.Condition(getAutoConvertExpression, ifTrue.Expression,
+                                ifFalse.Expression, propertyPair.Value.PropertyType);
+                            var memberBinding = Expression.Bind(propertyPair.Value, memberExpression);
+                            memberBindingList.Add(memberBinding);
+                        }
+                        else if (InputAndOutputAreComplexTypes(propertyPair.Key.PropertyType,
+                                     propertyPair.Value.PropertyType))
+                        {
+                            // var methodKey =
+                            //     $"MapToMethod_{propertyPair.Key.PropertyType.FullName}|{propertyPair.Value.PropertyType.FullName}";
+                            // MethodInfo methodInfo;
+                            // if (!Constants.COMPLEX_TYPE_MAP_TO_METHOD_DICTIONARY.ContainsKey(methodKey))
+                            // {
+                            //     var mapperClass = typeof(Mapper<,>).MakeGenericType(
+                            //         propertyPair.Key.PropertyType,
+                            //         propertyPair.Value.PropertyType);
+                            //     methodInfo = mapperClass.GetMethod(MAP_TO_METHOD_NAME, BindingFlags.Public);
+                            //     Constants.COMPLEX_TYPE_MAP_TO_METHOD_DICTIONARY.Add(methodKey,methodInfo);
+                            // }
+                            // else
+                            // {
+                            //     methodInfo = Constants.COMPLEX_TYPE_MAP_TO_METHOD_DICTIONARY[methodKey];
+                            // }
+                        }
+                    }
                 }
             }
 

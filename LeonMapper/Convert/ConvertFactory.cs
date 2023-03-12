@@ -37,7 +37,7 @@ public class ConvertFactory
         }
     }
 
-    public static IConverter<TInput, TOutput> GetConverter<TInput, TOutput>()
+    public static IConverter<TInput, TOutput> GetTheBaseTypeConverter<TInput, TOutput>()
     {
         var key = $"{typeof(TInput).FullName}|{typeof(TOutput).FullName}";
         if (MapperConfig.GetDefaultConverterScope() == ConverterScopeEnum.CommonConverters)

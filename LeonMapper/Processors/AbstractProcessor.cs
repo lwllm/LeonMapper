@@ -4,7 +4,13 @@ namespace LeonMapper.Processors;
 
 public abstract class AbstractProcessor<TInput, TOutput> : IProcessor<TInput, TOutput>
 {
+    protected const string GET_THE_BASE_TYPE_CONVERTER_METHOD_NAME = "GetTheBaseTypeConverter";
+    protected const string CONVERT_METHOD_NAME = "Convert";
+    protected const string GET_AUTO_CONVERT_CONFIG_METHOD_NAME = "GetAutoConvert";
+    protected const string MAP_TO_METHOD_NAME = "MapTo";
+
     public abstract TOutput? MapTo(TInput input);
+
     /// <summary>
     /// Key: TIn,Value: TOut
     /// </summary>
@@ -43,5 +49,39 @@ public abstract class AbstractProcessor<TInput, TOutput> : IProcessor<TInput, TO
         }
 
         return fieldDictionary;
+    }
+
+    /// <summary>
+    /// 判断是否基础类型
+    /// </summary>
+    /// <param name="type">需要判断的类型</param>
+    /// <returns>是否基础类型</returns>
+    private static bool IsBaseType(Type type)
+    {
+        return type.IsPrimitive
+               || type == typeof(string)
+               || type == typeof(decimal);
+    }
+
+    /// <summary>
+    /// 检查输入输出是否都是基础类型
+    /// </summary>
+    /// <param name="inputType">输入类型</param>
+    /// <param name="outputType">输出类型</param>
+    /// <returns>是否都是基础类型</returns>
+    protected static bool InputAndOutputAreBothBaseTypes(Type inputType, Type outputType)
+    {
+        return IsBaseType(inputType) && IsBaseType(outputType);
+    }
+
+    /// <summary>
+    /// 检查输入输出是否都是复杂类型
+    /// </summary>
+    /// <param name="inputType">输入类型</param>
+    /// <param name="outputType">输出类型</param>
+    /// <returns>是否都是复杂类型</returns>
+    protected static bool InputAndOutputAreComplexTypes(Type inputType, Type outputType)
+    {
+        return !IsBaseType(inputType) && !IsBaseType(outputType);
     }
 }
