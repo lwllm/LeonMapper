@@ -2,6 +2,7 @@
 using System.Reflection;
 using LeonMapper.Config;
 using LeonMapper.Convert;
+using LeonMapper.Processors.Model;
 
 namespace LeonMapper.Processors.ExpressionProcessor
 {
@@ -58,21 +59,30 @@ namespace LeonMapper.Processors.ExpressionProcessor
                         else if (InputAndOutputAreComplexTypes(propertyPair.Key.PropertyType,
                                      propertyPair.Value.PropertyType))
                         {
-                            // var methodKey =
-                            //     $"MapToMethod_{propertyPair.Key.PropertyType.FullName}|{propertyPair.Value.PropertyType.FullName}";
-                            // MethodInfo methodInfo;
-                            // if (!Constants.COMPLEX_TYPE_MAP_TO_METHOD_DICTIONARY.ContainsKey(methodKey))
-                            // {
-                            //     var mapperClass = typeof(Mapper<,>).MakeGenericType(
-                            //         propertyPair.Key.PropertyType,
-                            //         propertyPair.Value.PropertyType);
-                            //     methodInfo = mapperClass.GetMethod(MAP_TO_METHOD_NAME, BindingFlags.Public);
-                            //     Constants.COMPLEX_TYPE_MAP_TO_METHOD_DICTIONARY.Add(methodKey,methodInfo);
-                            // }
-                            // else
-                            // {
-                            //     methodInfo = Constants.COMPLEX_TYPE_MAP_TO_METHOD_DICTIONARY[methodKey];
-                            // }
+                            var methodKey =
+                                $"MapToMethod_{propertyPair.Key.PropertyType.FullName}|{propertyPair.Value.PropertyType.FullName}";
+                            MethodInvoker methodInvoker;
+                            if (!Constants.COMPLEX_TYPE_MAP_TO_METHOD_DICTIONARY.ContainsKey(methodKey))
+                            {
+                                methodInvoker = new MethodInvoker();
+                                var mapperClass = typeof(Mapper<,>).MakeGenericType(
+                                    propertyPair.Key.PropertyType,
+                                    propertyPair.Value.PropertyType);
+                                methodInvoker.Invoker = Activator.CreateInstance(mapperClass);
+                                methodInvoker.MethodInfo = mapperClass.GetMethod(MAP_TO_METHOD_NAME,
+                                    types: new Type[] { propertyPair.Key.PropertyType });
+                                Constants.COMPLEX_TYPE_MAP_TO_METHOD_DICTIONARY.Add(methodKey, methodInvoker);
+                            }
+                            else
+                            {
+                                methodInvoker = Constants.COMPLEX_TYPE_MAP_TO_METHOD_DICTIONARY[methodKey];
+                            }
+
+                            var convertExpression = Expression.Call(Expression.Constant(methodInvoker.Invoker),
+                                methodInvoker.MethodInfo,
+                                Expression.Property(sourceParameterExpression, propertyPair.Key));
+                            var memberBinding = Expression.Bind(propertyPair.Value, convertExpression);
+                            memberBindingList.Add(memberBinding);
                         }
                     }
                 }
