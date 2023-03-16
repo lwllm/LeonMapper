@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using LeonMapper.Attributes;
 
 namespace LeonMapper.Processors;
 
@@ -83,5 +84,30 @@ public abstract class AbstractProcessor<TInput, TOutput> : IProcessor<TInput, TO
     protected static bool InputAndOutputAreComplexTypes(Type inputType, Type outputType)
     {
         return !IsBaseType(inputType) && !IsBaseType(outputType);
+    }
+
+    protected static bool CheckCanMap(PropertyInfo inputProperty, PropertyInfo outputProperty)
+    {
+        //检查读写状态
+        if (!inputProperty.CanRead || !outputProperty.CanWrite)
+        {
+            return false;
+        }
+
+        //检查input是否有忽略属性
+        if (inputProperty.GetCustomAttributes(typeof(IgnoreMapAttribute)).Any() ||
+            inputProperty.GetCustomAttributes(typeof(IgnoreMapToAttribute)).Any())
+        {
+            return false;
+        }
+
+        //检查output是否有忽略属性
+        if (outputProperty.GetCustomAttributes(typeof(IgnoreMapAttribute)).Any() ||
+            outputProperty.GetCustomAttributes(typeof(IgnoreMapFromAttribute)).Any())
+        {
+            return false;
+        }
+
+        return true;
     }
 }
