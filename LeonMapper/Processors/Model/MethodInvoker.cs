@@ -6,5 +6,5 @@ public class MethodInvoker
 {
     public MethodInfo? MethodInfo { get; set; }
 
-    public Object Invoker { get; set; }
+    public object? Invoker { get; set; }
 }

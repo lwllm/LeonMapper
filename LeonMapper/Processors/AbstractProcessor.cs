@@ -110,4 +110,23 @@ public abstract class AbstractProcessor<TInput, TOutput> : IProcessor<TInput, TO
 
         return true;
     }
+    
+    protected static bool CheckCanMap(FieldInfo inputField, FieldInfo outputField)
+    {
+        //检查input是否有忽略属性
+        if (inputField.GetCustomAttributes(typeof(IgnoreMapAttribute)).Any() ||
+            inputField.GetCustomAttributes(typeof(IgnoreMapToAttribute)).Any())
+        {
+            return false;
+        }
+
+        //检查output是否有忽略属性
+        if (outputField.GetCustomAttributes(typeof(IgnoreMapAttribute)).Any() ||
+            outputField.GetCustomAttributes(typeof(IgnoreMapFromAttribute)).Any())
+        {
+            return false;
+        }
+
+        return true;
+    }
 }

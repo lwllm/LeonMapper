@@ -64,22 +64,8 @@ namespace LeonMapper.Processors.ExpressionProcessor
                     {
                         var methodKey =
                             $"MapToMethod_{propertyPair.Key.PropertyType.FullName}|{propertyPair.Value.PropertyType.FullName}";
-                        MethodInvoker methodInvoker;
-                        if (!Constants.COMPLEX_TYPE_MAP_TO_METHOD_DICTIONARY.ContainsKey(methodKey))
-                        {
-                            methodInvoker = new MethodInvoker();
-                            var mapperClass = typeof(Mapper<,>).MakeGenericType(
-                                propertyPair.Key.PropertyType,
-                                propertyPair.Value.PropertyType);
-                            methodInvoker.Invoker = Activator.CreateInstance(mapperClass);
-                            methodInvoker.MethodInfo = mapperClass.GetMethod(MAP_TO_METHOD_NAME,
-                                types: new Type[] { propertyPair.Key.PropertyType });
-                            Constants.COMPLEX_TYPE_MAP_TO_METHOD_DICTIONARY.Add(methodKey, methodInvoker);
-                        }
-                        else
-                        {
-                            methodInvoker = Constants.COMPLEX_TYPE_MAP_TO_METHOD_DICTIONARY[methodKey];
-                        }
+                        var methodInvoker =
+                            GetMethodInvoker(methodKey, propertyPair.Key.PropertyType, propertyPair.Value.PropertyType);
 
                         var convertExpression = Expression.Call(Expression.Constant(methodInvoker.Invoker),
                             methodInvoker.MethodInfo,
@@ -92,12 +78,61 @@ namespace LeonMapper.Processors.ExpressionProcessor
 
             foreach (var fieldPare in FieldDictionary)
             {
+                if (!CheckCanMap(fieldPare.Key, fieldPare.Value))
+                {
+                    continue;
+                }
+
                 if (fieldPare.Key.FieldType == fieldPare.Value.FieldType)
                 {
                     var field =
                         Expression.Field(sourceParameterExpression, fieldPare.Key);
                     var memberBinding = Expression.Bind(fieldPare.Value, field);
                     memberBindingList.Add(memberBinding);
+                }
+                else
+                {
+                    if (InputAndOutputAreBothBaseTypes(fieldPare.Key.FieldType,
+                            fieldPare.Value.FieldType))
+                    {
+                        var baseTypeConverterType = typeof(ConvertFactory)
+                            .GetMethod(GET_THE_BASE_TYPE_CONVERTER_METHOD_NAME)
+                            .MakeGenericMethod(fieldPare.Key.FieldType, fieldPare.Value.FieldType);
+                        var baseTypeConverter = baseTypeConverterType.Invoke(null, null);
+                        if (baseTypeConverter == null)
+                        {
+                            continue;
+                        }
+
+                        var baseTypeConvertMethod = baseTypeConverter.GetType().GetMethod(CONVERT_METHOD_NAME);
+                        var filed = Expression.Field(sourceParameterExpression, fieldPare.Key);
+                        var convertExpression = Expression.Call(Expression.Constant(baseTypeConverter),
+                            baseTypeConvertMethod, filed);
+                        var getAutoConvertMethod =
+                            typeof(MapperConfig).GetMethod(GET_AUTO_CONVERT_CONFIG_METHOD_NAME);
+                        var getAutoConvertExpression = Expression.Call(getAutoConvertMethod);
+                        var ifTrue = Expression.Bind(fieldPare.Value, convertExpression);
+                        var ifFalse = Expression.Bind(fieldPare.Value,
+                            Expression.Default(fieldPare.Value.FieldType));
+                        var memberExpression = Expression.Condition(getAutoConvertExpression, ifTrue.Expression,
+                            ifFalse.Expression, fieldPare.Value.FieldType);
+                        var memberBinding = Expression.Bind(fieldPare.Value, memberExpression);
+                        memberBindingList.Add(memberBinding);
+                    }
+                    else if (InputAndOutputAreComplexTypes(fieldPare.Key.FieldType,
+                                 fieldPare.Value.FieldType))
+                    {
+                        var methodKey =
+                            $"MapToMethod_{fieldPare.Key.FieldType.FullName}|{fieldPare.Value.FieldType.FullName}";
+                        var methodInvoker =
+                            GetMethodInvoker(methodKey, fieldPare.Key.FieldType, fieldPare.Value.FieldType);
+
+                        var convertExpression = Expression.Call(Expression.Constant(methodInvoker.Invoker),
+                            methodInvoker.MethodInfo,
+                            Expression.Field(sourceParameterExpression, fieldPare.Key));
+                        var memberBinding = Expression.Bind(fieldPare.Value, convertExpression);
+                        memberBindingList.Add(memberBinding);
+                    }
                 }
             }
 
@@ -107,6 +142,28 @@ namespace LeonMapper.Processors.ExpressionProcessor
             var lambda = Expression.Lambda<Func<TInput, TOutput>>(
                 memberInitExpression, sourceParameterExpression);
             CreateTargetObjectFunc = lambda.Compile();
+        }
+
+        private static MethodInvoker GetMethodInvoker(string methodKey, Type inputType, Type outputType)
+        {
+            MethodInvoker methodInvoker;
+            if (!Constants.COMPLEX_TYPE_MAP_TO_METHOD_DICTIONARY.ContainsKey(methodKey))
+            {
+                methodInvoker = new MethodInvoker();
+                var mapperClass = typeof(Mapper<,>).MakeGenericType(
+                    inputType,
+                    outputType);
+                methodInvoker.Invoker = Activator.CreateInstance(mapperClass);
+                methodInvoker.MethodInfo = mapperClass.GetMethod(MAP_TO_METHOD_NAME,
+                    types: new Type[] { inputType });
+                Constants.COMPLEX_TYPE_MAP_TO_METHOD_DICTIONARY.Add(methodKey, methodInvoker);
+            }
+            else
+            {
+                methodInvoker = Constants.COMPLEX_TYPE_MAP_TO_METHOD_DICTIONARY[methodKey];
+            }
+
+            return methodInvoker;
         }
 
         public override TOutput MapTo(TInput input)

@@ -17,7 +17,7 @@ namespace LeonMapper.Test
             // 字符类型：char
             // 布尔类型：bool
             // 指针类型：IntPtr, UIntPtr
-            var types = new Type[]
+            var types = new[]
             {
                 typeof(sbyte),
                 typeof(byte),
@@ -41,9 +41,17 @@ namespace LeonMapper.Test
         {
             var role = new Role()
             {
+                RoleId1 = 11,
+                RoleName = "Role11",
+                test1 = "ttt1",
+                test2 = "ttt2"
+            };
+            var role2 = new Role()
+            {
                 RoleId1 = 22,
                 RoleName = "Role22",
-                test = "ttt"
+                test1 = "ttt1_2",
+                test2 = "ttt2_2"
             };
             var user = new User
             {
@@ -51,7 +59,10 @@ namespace LeonMapper.Test
                 StudentNumber = "123",
                 Name = "leon",
                 Address = "china",
-                Role = role
+                Role = role,
+                test1 = "t1",
+                test2 = 2222,
+                role2 = role2
             };
 
             var userMapper = new Mapper<User, UserNew?>();
@@ -80,7 +91,7 @@ namespace LeonMapper.Test
             {
                 RoleId1 = 22,
                 RoleName = "Role22",
-                test = "ttt"
+                test1 = "ttt1"
             };
             User user = new User
             {
@@ -111,7 +122,7 @@ namespace LeonMapper.Test
                 {
                     RoleId2 = role.RoleId1,
                     RoleName = role.RoleName,
-                    test = role.test
+                    test1 = role.test1
                 };
             }
 
