@@ -15,7 +15,7 @@ public abstract class AbstractProcessor<TInput, TOutput> : IProcessor<TInput, TO
     /// <summary>
     /// Key: TIn,Value: TOut
     /// </summary>
-    protected static readonly Dictionary<PropertyInfo, PropertyInfo> PropertyDictionary;
+    protected static readonly Dictionary<PropertyInfo, HashSet<PropertyInfo>> PropertyDictionary;
 
     protected static readonly Dictionary<FieldInfo, FieldInfo> FieldDictionary;
 
@@ -25,18 +25,88 @@ public abstract class AbstractProcessor<TInput, TOutput> : IProcessor<TInput, TO
         FieldDictionary = GetFieldDictionary(typeof(TInput), typeof(TOutput));
     }
 
-    private static Dictionary<PropertyInfo, PropertyInfo> GetPropertyDictionary(Type inputType, Type outputType)
+    private static Dictionary<PropertyInfo, HashSet<PropertyInfo>> GetPropertyDictionary(Type inputType,
+        Type outputType)
     {
         var sourceProperties = inputType.GetProperties().Where(p => p.CanRead).ToDictionary(p => p.Name, p => p);
         var targetProperties = outputType.GetProperties().Where(p => p.CanWrite).ToDictionary(p => p.Name, p => p);
-        var propertyDictionary = new Dictionary<PropertyInfo, PropertyInfo>(sourceProperties.Count);
-        foreach (var sourcePropertiesKey in sourceProperties.Keys.Where(sourcePropertiesKey =>
-                     targetProperties.ContainsKey(sourcePropertiesKey)))
+        var propertyDictionary = new Dictionary<PropertyInfo, HashSet<PropertyInfo>>(sourceProperties.Count);
+        //处理MapTo、MapFrom
+        var mappedTargetProperties = new HashSet<string>();
+        foreach (var sourcePropertiesKey in sourceProperties.Keys)
         {
-            propertyDictionary.Add(sourceProperties[sourcePropertiesKey], targetProperties[sourcePropertiesKey]);
+            var mapToAttrs = sourceProperties[sourcePropertiesKey]
+                .GetCustomAttributes(typeof(MapToAttribute))
+                .Cast<MapToAttribute>();
+            var mapToAttributes = mapToAttrs as MapToAttribute[] ?? mapToAttrs.ToArray();
+            if (mapToAttributes.Any())
+            {
+                //如果设置了MapTo注解，则不按名称映射，直接映射到MapTo设置的属性（支持多个）
+                foreach (var mapToAttr in mapToAttributes)
+                {
+                    AddPropertyKeyValuePair(
+                        targetProperties,
+                        sourcePropertiesKey,
+                        mapToAttr.MapToName,
+                        propertyDictionary,
+                        sourceProperties,
+                        mappedTargetProperties);
+                }
+            }
+            else
+            {
+                AddPropertyKeyValuePair(
+                    targetProperties,
+                    sourcePropertiesKey,
+                    sourcePropertiesKey,
+                    propertyDictionary,
+                    sourceProperties,
+                    mappedTargetProperties);
+            }
+        }
+
+        mappedTargetProperties = new HashSet<string>();
+        foreach (var targetPropertiesKey in targetProperties.Keys)
+        {
+            //MapFrom优先于MapTo
+            var mapFromAttr = targetProperties[targetPropertiesKey]
+                .GetCustomAttributes(typeof(MapFromAttribute)).FirstOrDefault();
+            if (mapFromAttr != null)
+            {
+                var propertyName = ((MapFromAttribute)mapFromAttr).MapFromName;
+                if (sourceProperties.ContainsKey(propertyName))
+                {
+                    AddPropertyKeyValuePair(
+                        targetProperties,
+                        propertyName,
+                        targetPropertiesKey,
+                        propertyDictionary,
+                        sourceProperties,
+                        mappedTargetProperties);
+                }
+            }
         }
 
         return propertyDictionary;
+    }
+
+    private static void AddPropertyKeyValuePair(Dictionary<string, PropertyInfo> targetProperties,
+        string sourcePropertyKey, string targetPropertyKey,
+        Dictionary<PropertyInfo, HashSet<PropertyInfo>> propertyDictionary,
+        Dictionary<string, PropertyInfo> sourceProperties,
+        HashSet<string> mappedTargetProperties)
+    {
+        if (targetProperties.ContainsKey(targetPropertyKey) && !mappedTargetProperties.Contains(targetPropertyKey))
+        {
+            if (!propertyDictionary.ContainsKey(sourceProperties[sourcePropertyKey]))
+            {
+                propertyDictionary.Add(sourceProperties[sourcePropertyKey], new HashSet<PropertyInfo>());
+            }
+
+            propertyDictionary[sourceProperties[sourcePropertyKey]]
+                .Add(targetProperties[targetPropertyKey]);
+            mappedTargetProperties.Add(targetPropertyKey);
+        }
     }
 
     private static Dictionary<FieldInfo, FieldInfo> GetFieldDictionary(Type inputType, Type outputType)
@@ -89,10 +159,10 @@ public abstract class AbstractProcessor<TInput, TOutput> : IProcessor<TInput, TO
     protected static bool CheckCanMap(PropertyInfo inputProperty, PropertyInfo outputProperty)
     {
         //检查读写状态
-        if (!inputProperty.CanRead || !outputProperty.CanWrite)
-        {
-            return false;
-        }
+        // if (!inputProperty.CanRead || !outputProperty.CanWrite)
+        // {
+        //     return false;
+        // }
 
         //检查input是否有忽略属性
         if (inputProperty.GetCustomAttributes(typeof(IgnoreMapAttribute)).Any() ||
@@ -110,7 +180,7 @@ public abstract class AbstractProcessor<TInput, TOutput> : IProcessor<TInput, TO
 
         return true;
     }
-    
+
     protected static bool CheckCanMap(FieldInfo inputField, FieldInfo outputField)
     {
         //检查input是否有忽略属性

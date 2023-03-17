@@ -22,15 +22,15 @@ public class EmitProcessor<TInput, TOutput> : AbstractProcessor<TInput, TOutput>
         generator.Emit(OpCodes.Stloc_0);
         foreach (var propertyMap in PropertyDictionary)
         {
-            var tinGetMethod = propertyMap.Key.GetGetMethod();
-            var toutSetMethod = propertyMap.Value.GetSetMethod();
-            if (tinGetMethod != null && toutSetMethod != null)
-            {
-                generator.Emit(OpCodes.Ldloc_0);
-                generator.Emit(OpCodes.Ldarg_0);
-                generator.Emit(OpCodes.Callvirt,tinGetMethod);
-                generator.Emit(OpCodes.Callvirt, toutSetMethod);
-            }
+            // var tinGetMethod = propertyMap.Key.GetGetMethod();
+            // var toutSetMethod = propertyMap.Value.GetSetMethod();
+            // if (tinGetMethod != null && toutSetMethod != null)
+            // {
+            //     generator.Emit(OpCodes.Ldloc_0);
+            //     generator.Emit(OpCodes.Ldarg_0);
+            //     generator.Emit(OpCodes.Callvirt,tinGetMethod);
+            //     generator.Emit(OpCodes.Callvirt, toutSetMethod);
+            // }
         }
 
         foreach (var fieldInfo in FieldDictionary)

@@ -74,14 +74,14 @@ namespace LeonMapper.Test
             // System.Console.WriteLine(newUser2.ToString());
             // System.Console.WriteLine(newRole.ToString());
 
-            var config = new MapperConfiguration(cfg =>
-            {
-                cfg.CreateMap<User, UserNew>();
-                cfg.CreateMap<Role, RoleNew>();
-            });
-            var mapper = config.CreateMapper();
-            var newUser2 = mapper.Map<UserNew>(user);
-            System.Console.WriteLine(newUser2.ToString());
+            // var config = new MapperConfiguration(cfg =>
+            // {
+            //     cfg.CreateMap<User, UserNew>();
+            //     cfg.CreateMap<Role, RoleNew>();
+            // });
+            // var mapper = config.CreateMapper();
+            // var newUser2 = mapper.Map<UserNew>(user);
+            // System.Console.WriteLine(newUser2.ToString());
         }
 
         [TestMethod]

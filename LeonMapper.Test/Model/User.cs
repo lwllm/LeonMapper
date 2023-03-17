@@ -9,6 +9,8 @@ namespace LeonMapper.Test.Model
         }
 
         public int Id { get; set; }
+        
+        [MapTo(nameof(UserNew.Name))] 
         public string StudentNumber { get; set; }
         public string Name { get; set; }
 
@@ -41,7 +43,7 @@ namespace LeonMapper.Test.Model
 
         public string test1;
         public string test2;
-        
+
         public RoleNew role2;
 
         public override string ToString()
