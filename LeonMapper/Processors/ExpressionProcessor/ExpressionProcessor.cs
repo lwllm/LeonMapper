@@ -91,9 +91,11 @@ namespace LeonMapper.Processors.ExpressionProcessor
             CreateTargetObjectFunc = lambda.Compile();
         }
 
-        private static void GenerateMapExpression(KeyValuePair<PropertyInfo, HashSet<PropertyInfo>> propertyPair, PropertyInfo targetProperty,
-            ParameterExpression sourceParameterExpression, List<MemberBinding> memberBindingList)
+        private static void GenerateMapExpression(KeyValuePair<PropertyInfo, HashSet<PropertyInfo>> propertyPair,
+            PropertyInfo targetProperty, ParameterExpression sourceParameterExpression,
+            ICollection<MemberBinding> memberBindingList)
         {
+            if (sourceParameterExpression == null) throw new ArgumentNullException(nameof(sourceParameterExpression));
             if (!CheckCanMap(propertyPair.Key, targetProperty))
             {
                 return;

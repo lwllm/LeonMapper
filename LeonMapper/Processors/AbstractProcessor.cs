@@ -17,7 +17,7 @@ public abstract class AbstractProcessor<TInput, TOutput> : IProcessor<TInput, TO
     /// </summary>
     protected static readonly Dictionary<PropertyInfo, HashSet<PropertyInfo>> PropertyDictionary;
 
-    protected static readonly Dictionary<FieldInfo, FieldInfo> FieldDictionary;
+    protected static readonly Dictionary<FieldInfo, HashSet<FieldInfo>> FieldDictionary;
 
     static AbstractProcessor()
     {
@@ -109,14 +109,15 @@ public abstract class AbstractProcessor<TInput, TOutput> : IProcessor<TInput, TO
         }
     }
 
-    private static Dictionary<FieldInfo, FieldInfo> GetFieldDictionary(Type inputType, Type outputType)
+    private static Dictionary<FieldInfo, HashSet<FieldInfo>> GetFieldDictionary(Type inputType, Type outputType)
     {
         var sourceFields = inputType.GetFields().ToDictionary(f => f.Name, f => f);
         var targetFields = outputType.GetFields().ToDictionary(f => f.Name, f => f);
-        var fieldDictionary = new Dictionary<FieldInfo, FieldInfo>(sourceFields.Count);
+        var fieldDictionary = new Dictionary<FieldInfo, HashSet<FieldInfo>>(sourceFields.Count);
         foreach (var fieldsKey in sourceFields.Keys.Where(fieldsKey => targetFields.ContainsKey(fieldsKey)))
         {
-            fieldDictionary.Add(sourceFields[fieldsKey], targetFields[fieldsKey]);
+            fieldDictionary.Add(sourceFields[fieldsKey], new HashSet<FieldInfo>());
+            fieldDictionary[sourceFields[fieldsKey]].Add(targetFields[fieldsKey]);
         }
 
         return fieldDictionary;
