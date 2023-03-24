@@ -35,10 +35,10 @@ public class EmitProcessor<TInput, TOutput> : AbstractProcessor<TInput, TOutput>
 
         foreach (var fieldInfo in FieldDictionary)
         {
-            generator.Emit(OpCodes.Ldloc_0);
-            generator.Emit(OpCodes.Ldarg_0);
-            generator.Emit(OpCodes.Ldfld, fieldInfo.Key);
-            generator.Emit(OpCodes.Stfld, fieldInfo.Value);
+            // generator.Emit(OpCodes.Ldloc_0);
+            // generator.Emit(OpCodes.Ldarg_0);
+            // generator.Emit(OpCodes.Ldfld, fieldInfo.Key);
+            // generator.Emit(OpCodes.Stfld, fieldInfo.Value);
         }
         generator.Emit(OpCodes.Ldloc_0);
         generator.Emit(OpCodes.Ret);

@@ -19,67 +19,15 @@ namespace LeonMapper.Processors.ExpressionProcessor
             {
                 foreach (var targetProperty in propertyPair.Value)
                 {
-                    GenerateMapExpression(propertyPair, targetProperty, sourceParameterExpression, memberBindingList);
+                    GeneratePropertyMapExpression(propertyPair, targetProperty, sourceParameterExpression, memberBindingList);
                 }
             }
 
-            foreach (var fieldPare in FieldDictionary)
+            foreach (var fieldPair in FieldDictionary)
             {
-                if (!CheckCanMap(fieldPare.Key, fieldPare.Value))
+                foreach (var targetField in fieldPair.Value)
                 {
-                    continue;
-                }
-
-                if (fieldPare.Key.FieldType == fieldPare.Value.FieldType)
-                {
-                    var field =
-                        Expression.Field(sourceParameterExpression, fieldPare.Key);
-                    var memberBinding = Expression.Bind(fieldPare.Value, field);
-                    memberBindingList.Add(memberBinding);
-                }
-                else
-                {
-                    if (InputAndOutputAreBothBaseTypes(fieldPare.Key.FieldType,
-                            fieldPare.Value.FieldType))
-                    {
-                        var baseTypeConverterType = typeof(ConvertFactory)
-                            .GetMethod(GET_THE_BASE_TYPE_CONVERTER_METHOD_NAME)
-                            .MakeGenericMethod(fieldPare.Key.FieldType, fieldPare.Value.FieldType);
-                        var baseTypeConverter = baseTypeConverterType.Invoke(null, null);
-                        if (baseTypeConverter == null)
-                        {
-                            continue;
-                        }
-
-                        var baseTypeConvertMethod = baseTypeConverter.GetType().GetMethod(CONVERT_METHOD_NAME);
-                        var filed = Expression.Field(sourceParameterExpression, fieldPare.Key);
-                        var convertExpression = Expression.Call(Expression.Constant(baseTypeConverter),
-                            baseTypeConvertMethod, filed);
-                        var getAutoConvertMethod =
-                            typeof(MapperConfig).GetMethod(GET_AUTO_CONVERT_CONFIG_METHOD_NAME);
-                        var getAutoConvertExpression = Expression.Call(getAutoConvertMethod);
-                        var ifTrue = Expression.Bind(fieldPare.Value, convertExpression);
-                        var ifFalse = Expression.Bind(fieldPare.Value,
-                            Expression.Default(fieldPare.Value.FieldType));
-                        var memberExpression = Expression.Condition(getAutoConvertExpression, ifTrue.Expression,
-                            ifFalse.Expression, fieldPare.Value.FieldType);
-                        var memberBinding = Expression.Bind(fieldPare.Value, memberExpression);
-                        memberBindingList.Add(memberBinding);
-                    }
-                    else if (InputAndOutputAreComplexTypes(fieldPare.Key.FieldType,
-                                 fieldPare.Value.FieldType))
-                    {
-                        var methodKey =
-                            $"MapToMethod_{fieldPare.Key.FieldType.FullName}|{fieldPare.Value.FieldType.FullName}";
-                        var methodInvoker =
-                            GetMethodInvoker(methodKey, fieldPare.Key.FieldType, fieldPare.Value.FieldType);
-
-                        var convertExpression = Expression.Call(Expression.Constant(methodInvoker.Invoker),
-                            methodInvoker.MethodInfo,
-                            Expression.Field(sourceParameterExpression, fieldPare.Key));
-                        var memberBinding = Expression.Bind(fieldPare.Value, convertExpression);
-                        memberBindingList.Add(memberBinding);
-                    }
+                    GenerateFieldMapExpression(fieldPair, targetField, sourceParameterExpression, memberBindingList);
                 }
             }
 
@@ -91,7 +39,68 @@ namespace LeonMapper.Processors.ExpressionProcessor
             CreateTargetObjectFunc = lambda.Compile();
         }
 
-        private static void GenerateMapExpression(KeyValuePair<PropertyInfo, HashSet<PropertyInfo>> propertyPair,
+        private static void GenerateFieldMapExpression(KeyValuePair<FieldInfo, HashSet<FieldInfo>> fieldPair, FieldInfo targetField,
+            Expression sourceParameterExpression, ICollection<MemberBinding> memberBindingList)
+        {
+            if (!CheckCanMap(fieldPair.Key, targetField))
+            {
+                return;
+            }
+
+            if (fieldPair.Key.FieldType == targetField.FieldType)
+            {
+                var field =
+                    Expression.Field(sourceParameterExpression, fieldPair.Key);
+                var memberBinding = Expression.Bind(targetField, field);
+                memberBindingList.Add(memberBinding);
+            }
+            else
+            {
+                if (InputAndOutputAreBothBaseTypes(fieldPair.Key.FieldType,
+                        targetField.FieldType))
+                {
+                    var baseTypeConverterType = typeof(ConvertFactory)
+                        .GetMethod(GET_THE_BASE_TYPE_CONVERTER_METHOD_NAME)
+                        .MakeGenericMethod(fieldPair.Key.FieldType, targetField.FieldType);
+                    var baseTypeConverter = baseTypeConverterType.Invoke(null, null);
+                    if (baseTypeConverter == null)
+                    {
+                        return;
+                    }
+
+                    var baseTypeConvertMethod = baseTypeConverter.GetType().GetMethod(CONVERT_METHOD_NAME);
+                    var filed = Expression.Field(sourceParameterExpression, fieldPair.Key);
+                    var convertExpression = Expression.Call(Expression.Constant(baseTypeConverter),
+                        baseTypeConvertMethod, filed);
+                    var getAutoConvertMethod =
+                        typeof(MapperConfig).GetMethod(GET_AUTO_CONVERT_CONFIG_METHOD_NAME);
+                    var getAutoConvertExpression = Expression.Call(getAutoConvertMethod);
+                    var ifTrue = Expression.Bind(targetField, convertExpression);
+                    var ifFalse = Expression.Bind(targetField,
+                        Expression.Default(targetField.FieldType));
+                    var memberExpression = Expression.Condition(getAutoConvertExpression, ifTrue.Expression,
+                        ifFalse.Expression, targetField.FieldType);
+                    var memberBinding = Expression.Bind(targetField, memberExpression);
+                    memberBindingList.Add(memberBinding);
+                }
+                else if (InputAndOutputAreComplexTypes(fieldPair.Key.FieldType,
+                             targetField.FieldType))
+                {
+                    var methodKey =
+                        $"MapToMethod_{fieldPair.Key.FieldType.FullName}|{targetField.FieldType.FullName}";
+                    var methodInvoker =
+                        GetMethodInvoker(methodKey, fieldPair.Key.FieldType, targetField.FieldType);
+
+                    var convertExpression = Expression.Call(Expression.Constant(methodInvoker.Invoker),
+                        methodInvoker.MethodInfo,
+                        Expression.Field(sourceParameterExpression, fieldPair.Key));
+                    var memberBinding = Expression.Bind(targetField, convertExpression);
+                    memberBindingList.Add(memberBinding);
+                }
+            }
+        }
+
+        private static void GeneratePropertyMapExpression(KeyValuePair<PropertyInfo, HashSet<PropertyInfo>> propertyPair,
             PropertyInfo targetProperty, ParameterExpression sourceParameterExpression,
             ICollection<MemberBinding> memberBindingList)
         {
