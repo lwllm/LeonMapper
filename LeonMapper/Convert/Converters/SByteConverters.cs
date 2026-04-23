@@ -2,6 +2,9 @@
 
 namespace LeonMapper.Convert.Converters;
 
+/// <summary>
+/// 将 sbyte 类型转换为 byte 类型
+/// </summary>
 public class SByteToByteConverter : IConverter<sbyte, byte>
 {
     public byte Convert(sbyte input)
@@ -14,6 +17,9 @@ public class SByteToByteConverter : IConverter<sbyte, byte>
     }
 }
 
+/// <summary>
+/// 将 sbyte 类型转换为 short 类型
+/// </summary>
 public class SByteToShortConverter : IConverter<sbyte, short>
 {
     public short Convert(sbyte input)
@@ -22,6 +28,9 @@ public class SByteToShortConverter : IConverter<sbyte, short>
     }
 }
 
+/// <summary>
+/// 将 sbyte 类型转换为 ushort 类型
+/// </summary>
 public class SByteToUShortConverter : IConverter<sbyte, ushort>
 {
     public ushort Convert(sbyte input)
@@ -34,6 +43,9 @@ public class SByteToUShortConverter : IConverter<sbyte, ushort>
     }
 }
 
+/// <summary>
+/// 将 sbyte 类型转换为 int 类型
+/// </summary>
 public class SByteToIntConverter : IConverter<sbyte, int>
 {
     public int Convert(sbyte input)
@@ -42,6 +54,9 @@ public class SByteToIntConverter : IConverter<sbyte, int>
     }
 }
 
+/// <summary>
+/// 将 sbyte 类型转换为 uint 类型
+/// </summary>
 public class SByteToUIntConverter : IConverter<sbyte, uint>
 {
     public uint Convert(sbyte input)
@@ -54,6 +69,9 @@ public class SByteToUIntConverter : IConverter<sbyte, uint>
     }
 }
 
+/// <summary>
+/// 将 sbyte 类型转换为 long 类型
+/// </summary>
 public class SByteToLongConverter : IConverter<sbyte, long>
 {
     public long Convert(sbyte input)
@@ -62,6 +80,9 @@ public class SByteToLongConverter : IConverter<sbyte, long>
     }
 }
 
+/// <summary>
+/// 将 sbyte 类型转换为 ulong 类型
+/// </summary>
 public class SByteToULongConverter : IConverter<sbyte, ulong>
 {
     public ulong Convert(sbyte input)
@@ -74,6 +95,9 @@ public class SByteToULongConverter : IConverter<sbyte, ulong>
     }
 }
 
+/// <summary>
+/// 将 sbyte 类型转换为 float 类型
+/// </summary>
 public class SByteToFloatConverter : IConverter<sbyte, float>
 {
     public float Convert(sbyte input)
@@ -82,6 +106,9 @@ public class SByteToFloatConverter : IConverter<sbyte, float>
     }
 }
 
+/// <summary>
+/// 将 sbyte 类型转换为 double 类型
+/// </summary>
 public class SByteToDoubleConverter : IConverter<sbyte, double>
 {
     public double Convert(sbyte input)
@@ -90,6 +117,9 @@ public class SByteToDoubleConverter : IConverter<sbyte, double>
     }
 }
 
+/// <summary>
+/// 将 sbyte 类型转换为 decimal 类型
+/// </summary>
 public class SByteToDecimalConverter : IConverter<sbyte, decimal>
 {
     public decimal Convert(sbyte input)
@@ -98,18 +128,25 @@ public class SByteToDecimalConverter : IConverter<sbyte, decimal>
     }
 }
 
+/// <summary>
+/// 将 sbyte 类型转换为 char 类型
+/// </summary>
 public class SByteToCharConverter : IConverter<sbyte, char>
 {
     public char Convert(sbyte input)
     {
-        if (input < char.MinValue || input > char.MaxValue)
+        if (input < 0)
         {
             throw new OverflowException();
         }
+
         return (char)input;
     }
 }
 
+/// <summary>
+/// 将 sbyte 类型转换为 bool 类型
+/// </summary>
 public class SByteToBoolConverter : IConverter<sbyte, bool>
 {
     public bool Convert(sbyte input)
@@ -118,6 +155,9 @@ public class SByteToBoolConverter : IConverter<sbyte, bool>
     }
 }
 
+/// <summary>
+/// 将 sbyte 类型转换为 IntPtr 类型
+/// </summary>
 public class SByteToIntPtrConverter : IConverter<sbyte, IntPtr>
 {
     public IntPtr Convert(sbyte input)
@@ -126,6 +166,9 @@ public class SByteToIntPtrConverter : IConverter<sbyte, IntPtr>
     }
 }
 
+/// <summary>
+/// 将 sbyte 类型转换为 UIntPtr 类型
+/// </summary>
 public class SByteToUIntPtrConverter : IConverter<sbyte, UIntPtr>
 {
     public UIntPtr Convert(sbyte input)
@@ -138,6 +181,9 @@ public class SByteToUIntPtrConverter : IConverter<sbyte, UIntPtr>
     }
 }
 
+/// <summary>
+/// 将 sbyte 类型转换为 string 类型
+/// </summary>
 [CommonConverter]
 public class SByteToStringConverter : IConverter<sbyte, string>
 {

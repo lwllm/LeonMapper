@@ -2,6 +2,9 @@
 
 namespace LeonMapper.Convert.Converters;
 
+/// <summary>
+/// 将 uint 类型转换为 sbyte 类型
+/// </summary>
 public class UIntToSByteConverter : IConverter<uint, sbyte>
 {
     public sbyte Convert(uint input)
@@ -14,6 +17,9 @@ public class UIntToSByteConverter : IConverter<uint, sbyte>
     }
 }
 
+/// <summary>
+/// 将 uint 类型转换为 byte 类型
+/// </summary>
 public class UIntToByteConverter : IConverter<uint, byte>
 {
     public byte Convert(uint input)
@@ -26,6 +32,9 @@ public class UIntToByteConverter : IConverter<uint, byte>
     }
 }
 
+/// <summary>
+/// 将 uint 类型转换为 short 类型
+/// </summary>
 public class UIntToShortConverter : IConverter<uint, short>
 {
     public short Convert(uint input)
@@ -38,6 +47,9 @@ public class UIntToShortConverter : IConverter<uint, short>
     }
 }
 
+/// <summary>
+/// 将 uint 类型转换为 ushort 类型
+/// </summary>
 public class UIntToUShortConverter : IConverter<uint, ushort>
 {
     public ushort Convert(uint input)
@@ -50,6 +62,9 @@ public class UIntToUShortConverter : IConverter<uint, ushort>
     }
 }
 
+/// <summary>
+/// 将 uint 类型转换为 int 类型
+/// </summary>
 public class UIntToIntConverter : IConverter<uint, int>
 {
     public int Convert(uint input)
@@ -62,6 +77,9 @@ public class UIntToIntConverter : IConverter<uint, int>
     }
 }
 
+/// <summary>
+/// 将 uint 类型转换为 long 类型
+/// </summary>
 public class UIntToLongConverter : IConverter<uint, long>
 {
     public long Convert(uint input)
@@ -70,6 +88,9 @@ public class UIntToLongConverter : IConverter<uint, long>
     }
 }
 
+/// <summary>
+/// 将 uint 类型转换为 ulong 类型
+/// </summary>
 public class UIntToULongConverter : IConverter<uint, ulong>
 {
     public ulong Convert(uint input)
@@ -78,6 +99,9 @@ public class UIntToULongConverter : IConverter<uint, ulong>
     }
 }
 
+/// <summary>
+/// 将 uint 类型转换为 float 类型
+/// </summary>
 public class UIntToFloatConverter : IConverter<uint, float>
 {
     public float Convert(uint input)
@@ -90,6 +114,9 @@ public class UIntToFloatConverter : IConverter<uint, float>
     }
 }
 
+/// <summary>
+/// 将 uint 类型转换为 double 类型
+/// </summary>
 public class UIntToDoubleConverter : IConverter<uint, double>
 {
     public double Convert(uint input)
@@ -102,6 +129,9 @@ public class UIntToDoubleConverter : IConverter<uint, double>
     }
 }
 
+/// <summary>
+/// 将 uint 类型转换为 decimal 类型
+/// </summary>
 public class UIntToDecimalConverter : IConverter<uint, decimal>
 {
     public decimal Convert(uint input)
@@ -110,6 +140,9 @@ public class UIntToDecimalConverter : IConverter<uint, decimal>
     }
 }
 
+/// <summary>
+/// 将 uint 类型转换为 char 类型
+/// </summary>
 public class UIntToCharConverter : IConverter<uint, char>
 {
     public char Convert(uint input)
@@ -122,6 +155,9 @@ public class UIntToCharConverter : IConverter<uint, char>
     }
 }
 
+/// <summary>
+/// 将 uint 类型转换为 bool 类型
+/// </summary>
 public class UIntToBoolConverter : IConverter<uint, bool>
 {
     public bool Convert(uint input)
@@ -134,6 +170,9 @@ public class UIntToBoolConverter : IConverter<uint, bool>
     }
 }
 
+/// <summary>
+/// 将 uint 类型转换为 IntPtr 类型
+/// </summary>
 public class UIntToIntPtrConverter : IConverter<uint, IntPtr>
 {
     public IntPtr Convert(uint input)
@@ -146,6 +185,9 @@ public class UIntToIntPtrConverter : IConverter<uint, IntPtr>
     }
 }
 
+/// <summary>
+/// 将 uint 类型转换为 UIntPtr 类型
+/// </summary>
 public class UIntToUIntPtrConverter : IConverter<uint, UIntPtr>
 {
     public UIntPtr Convert(uint input)
@@ -154,6 +196,9 @@ public class UIntToUIntPtrConverter : IConverter<uint, UIntPtr>
     }
 }
 
+/// <summary>
+/// 将 uint 类型转换为 string 类型
+/// </summary>
 [CommonConverter]
 public class UIntToStringConverter : IConverter<uint, string>
 {

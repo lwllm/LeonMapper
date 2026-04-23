@@ -1,6 +1,8 @@
+using System.Collections.Concurrent;
 using System.Reflection;
 using LeonMapper.Attributes;
 using LeonMapper.Convert;
+using LeonMapper.Utils;
 
 namespace LeonMapper.Plan.Builder;
 
@@ -9,41 +11,38 @@ namespace LeonMapper.Plan.Builder;
 /// </summary>
 public static class MappingPlanBuilder
 {
-    private static readonly Dictionary<(Type, Type), TypeMappingPlan> _planCache = new();
-    private static readonly object _lock = new();
+    private static readonly ConcurrentDictionary<(Type, Type, int), TypeMappingPlan> _planCache = new();
 
     /// <summary>
-    /// 构建映射计划
+    /// 构建映射计划（泛型入口）
     /// </summary>
+    /// <typeparam name="TSource">源类型</typeparam>
+    /// <typeparam name="TTarget">目标类型</typeparam>
+    /// <param name="options">构建选项，为 null 时使用默认配置</param>
+    /// <returns>类型映射计划</returns>
     public static TypeMappingPlan Build<TSource, TTarget>(PlanBuildOptions? options = null)
     {
         return Build(typeof(TSource), typeof(TTarget), options);
     }
 
     /// <summary>
-    /// 构建映射计划
+    /// 构建映射计划（非泛型入口，带缓存）
     /// </summary>
+    /// <param name="sourceType">源类型</param>
+    /// <param name="targetType">目标类型</param>
+    /// <param name="options">构建选项，为 null 时使用默认配置</param>
+    /// <returns>类型映射计划</returns>
     public static TypeMappingPlan Build(Type sourceType, Type targetType, PlanBuildOptions? options = null)
     {
         options ??= PlanBuildOptions.Default;
-        var cacheKey = (sourceType, targetType);
+        var cacheKey = (sourceType, targetType, options.GetHashCode());
 
-        lock (_lock)
-        {
-            if (_planCache.TryGetValue(cacheKey, out var cached))
-                return cached;
-        }
-
-        var plan = BuildCore(sourceType, targetType, options);
-
-        lock (_lock)
-        {
-            _planCache[cacheKey] = plan;
-        }
-
-        return plan;
+        return _planCache.GetOrAdd(cacheKey, _ => BuildCore(sourceType, targetType, options));
     }
 
+    /// <summary>
+    /// 核心构建逻辑：发现成员映射关系并生成计划
+    /// </summary>
     private static TypeMappingPlan BuildCore(Type sourceType, Type targetType, PlanBuildOptions options)
     {
         // 属性映射
@@ -80,35 +79,59 @@ public static class MappingPlanBuilder
             }
         }
 
-        // 未映射成员
+        // 收集未映射的源成员
         var unmappedSource = new List<MemberInfo>();
         var unmappedTarget = new List<MemberInfo>();
 
-        foreach (var prop in sourceType.GetProperties().Where(p => p.CanRead))
+        foreach (var prop in sourceType.GetProperties().Where(p => p.CanRead && p.GetIndexParameters().Length == 0))
+        {
             if (!mappedSourceProps.Contains(prop.Name))
+            {
                 unmappedSource.Add(prop);
+            }
+        }
 
-        foreach (var prop in targetType.GetProperties().Where(p => p.CanWrite))
+        // 收集未映射的目标成员
+        foreach (var prop in targetType.GetProperties().Where(p => p.CanWrite && p.GetIndexParameters().Length == 0))
+        {
             if (!mappedTargetProps.Contains(prop.Name))
+            {
                 unmappedTarget.Add(prop);
+            }
+        }
 
         foreach (var field in sourceType.GetFields())
+        {
             if (!mappedSourceFields.Contains(field.Name))
+            {
                 unmappedSource.Add(field);
+            }
+        }
 
         foreach (var field in targetType.GetFields())
+        {
             if (!mappedTargetFields.Contains(field.Name))
+            {
                 unmappedTarget.Add(field);
+            }
+        }
 
         return new TypeMappingPlan(sourceType, targetType, propertyMappings, fieldMappings,
             unmappedSource, unmappedTarget);
     }
 
+    /// <summary>
+    /// 发现属性映射关系：先处理 MapTo 注解，再处理 MapFrom 注解（MapFrom 优先级更高）
+    /// </summary>
     private static List<(PropertyInfo Source, PropertyInfo Target)> DiscoverPropertyMappings(
         Type sourceType, Type targetType)
     {
-        var sourceProps = sourceType.GetProperties().Where(p => p.CanRead).ToDictionary(p => p.Name, p => p);
-        var targetProps = targetType.GetProperties().Where(p => p.CanWrite).ToDictionary(p => p.Name, p => p);
+        var sourceProps = sourceType.GetProperties()
+            .Where(p => p.CanRead && p.GetIndexParameters().Length == 0)
+            .ToDictionary(p => p.Name, p => p);
+        var targetProps = targetType.GetProperties()
+            .Where(p => p.CanWrite && p.GetIndexParameters().Length == 0)
+            .ToDictionary(p => p.Name, p => p);
         var result = new List<(PropertyInfo Source, PropertyInfo Target)>();
         var mappedTargets = new HashSet<string>();
 
@@ -116,11 +139,14 @@ public static class MappingPlanBuilder
         foreach (var (_, sourceProp) in sourceProps)
         {
             if (ShouldIgnoreSource(sourceProp))
+            {
                 continue;
+            }
 
             var mapToAttrs = sourceProp.GetCustomAttributes<MapToAttribute>();
             if (mapToAttrs.Any())
             {
+                // 如果设置了 MapTo 注解，则只映射到 MapTo 指定的属性（支持多个）
                 foreach (var attr in mapToAttrs)
                 {
                     if (targetProps.TryGetValue(attr.MapToName, out var targetProp)
@@ -134,6 +160,7 @@ public static class MappingPlanBuilder
             }
             else
             {
+                // 无 MapTo 注解时按同名匹配
                 if (targetProps.TryGetValue(sourceProp.Name, out var targetProp)
                     && !mappedTargets.Contains(sourceProp.Name)
                     && !ShouldIgnoreTarget(targetProp))
@@ -144,22 +171,21 @@ public static class MappingPlanBuilder
             }
         }
 
-        // Pass 2: MapFrom 属性（优先级高于 MapTo，可覆盖）
-        var mappedTargets2 = new HashSet<string>();
+        // Pass 2: MapFrom 属性（优先级高于 MapTo，可覆盖已有映射）
         foreach (var (_, targetProp) in targetProps)
         {
             if (ShouldIgnoreTarget(targetProp))
+            {
                 continue;
+            }
 
             var mapFromAttr = targetProp.GetCustomAttributes<MapFromAttribute>().FirstOrDefault();
             if (mapFromAttr != null && sourceProps.TryGetValue(mapFromAttr.MapFromName, out var sourceProp2))
             {
                 if (!ShouldIgnoreSource(sourceProp2))
                 {
-                    // 移除之前的同名目标映射（如果存在）
                     result.RemoveAll(p => p.Target.Name == targetProp.Name);
                     result.Add((sourceProp2, targetProp));
-                    mappedTargets2.Add(targetProp.Name);
                 }
             }
         }
@@ -167,6 +193,9 @@ public static class MappingPlanBuilder
         return result;
     }
 
+    /// <summary>
+    /// 发现字段映射关系：仅按名称匹配
+    /// </summary>
     private static List<(FieldInfo Source, FieldInfo Target)> DiscoverFieldMappings(
         Type sourceType, Type targetType)
     {
@@ -177,7 +206,9 @@ public static class MappingPlanBuilder
         foreach (var (name, sourceField) in sourceFields)
         {
             if (ShouldIgnoreSource(sourceField))
+            {
                 continue;
+            }
 
             if (targetFields.TryGetValue(name, out var targetField) && !ShouldIgnoreTarget(targetField))
             {
@@ -188,22 +219,32 @@ public static class MappingPlanBuilder
         return result;
     }
 
+    /// <summary>
+    /// 根据源成员和目标成员的类型关系创建映射规则
+    /// </summary>
     private static MemberMapping? CreateMemberMapping(MemberInfo sourceMember, MemberInfo targetMember,
         PlanBuildOptions options)
     {
-        var sourceType = GetMemberType(sourceMember);
-        var targetType = GetMemberType(targetMember);
+        var sourceType = MemberUtils.GetMemberType(sourceMember);
+        var targetType = MemberUtils.GetMemberType(targetMember);
 
-        if (sourceType == targetType)
+        // 处理可空类型：获取底层类型进行判断
+        var sourceUnderlyingType = TypeUtils.GetUnderlyingType(sourceType);
+        var targetUnderlyingType = TypeUtils.GetUnderlyingType(targetType);
+
+        // 同类型直接赋值（包括可空类型与非可空版本的同底层类型）
+        if (sourceType == targetType || sourceUnderlyingType == targetUnderlyingType)
         {
             return new MemberMapping(sourceMember, targetMember, MappingStrategy.Direct);
         }
 
-        if (IsBaseType(sourceType) && IsBaseType(targetType))
+        // 两个都是基础类型（或可空基础类型），尝试类型转换
+        if (TypeUtils.IsBaseType(sourceUnderlyingType) && TypeUtils.IsBaseType(targetUnderlyingType))
         {
             if (options.AutoConvert)
             {
-                var converter = ConvertFactory.GetConverter(sourceType, targetType, options.ConverterScope);
+                // 查找底层类型的转换器
+                var converter = ConvertFactory.GetConverter(sourceUnderlyingType, targetUnderlyingType, options.ConverterScope);
                 if (converter != null)
                 {
                     return new MemberMapping(sourceMember, targetMember, MappingStrategy.Convert, converter);
@@ -213,39 +254,94 @@ public static class MappingPlanBuilder
             return null;
         }
 
-        if (!IsBaseType(sourceType) && !IsBaseType(targetType))
+        // 两个都是复杂类型（或可空复杂类型），递归构建嵌套映射计划
+        if (!TypeUtils.IsBaseType(sourceUnderlyingType) && !TypeUtils.IsBaseType(targetUnderlyingType))
         {
-            var nestedPlan = options.BuildNestedPlans ? Build(sourceType, targetType, options) : null;
+            // 检查是否为集合类型
+            var sourceElementType = TypeUtils.GetCollectionElementType(sourceType);
+            var targetElementType = TypeUtils.GetCollectionElementType(targetType);
+
+            if (sourceElementType != null && targetElementType != null)
+            {
+                // 集合类型映射
+                var elementMapping = CreateMemberMapping(
+                    CreatePseudoMember(sourceElementType),
+                    CreatePseudoMember(targetElementType),
+                    options);
+
+                if (elementMapping != null)
+                {
+                    return new MemberMapping(sourceMember, targetMember, MappingStrategy.Collection,
+                        nestedPlan: elementMapping.NestedPlan);
+                }
+
+                return null;
+            }
+
+            var nestedPlan = options.BuildNestedPlans ? Build(sourceUnderlyingType, targetUnderlyingType, options) : null;
             return new MemberMapping(sourceMember, targetMember, MappingStrategy.Complex, nestedPlan: nestedPlan);
         }
 
+        // 一个基础类型一个复杂类型，不映射
         return null;
     }
 
+    /// <summary>
+    /// 判断源成员是否应该被忽略（标注了 IgnoreMap 或 IgnoreMapTo）
+    /// </summary>
     private static bool ShouldIgnoreSource(MemberInfo member)
     {
         return member.GetCustomAttributes<IgnoreMapAttribute>().Any()
                || member.GetCustomAttributes<IgnoreMapToAttribute>().Any();
     }
 
+    /// <summary>
+    /// 判断目标成员是否应该被忽略（标注了 IgnoreMap 或 IgnoreMapFrom）
+    /// </summary>
     private static bool ShouldIgnoreTarget(MemberInfo member)
     {
         return member.GetCustomAttributes<IgnoreMapAttribute>().Any()
                || member.GetCustomAttributes<IgnoreMapFromAttribute>().Any();
     }
 
-    private static bool IsBaseType(Type type)
+    /// <summary>
+    /// 创建伪成员信息用于集合元素映射
+    /// </summary>
+    private static MemberInfo CreatePseudoMember(Type elementType)
     {
-        return type.IsPrimitive || type == typeof(string) || type == typeof(decimal);
+        return new PseudoMemberInfo(elementType);
     }
 
-    private static Type GetMemberType(MemberInfo member)
+    /// <summary>
+    /// 伪成员信息类，用于集合元素映射
+    /// </summary>
+    private class PseudoMemberInfo : MemberInfo
     {
-        return member switch
+        private readonly Type _elementType;
+
+        public PseudoMemberInfo(Type elementType)
         {
-            PropertyInfo p => p.PropertyType,
-            FieldInfo f => f.FieldType,
-            _ => throw new ArgumentException($"不支持的成员类型: {member.MemberType}")
-        };
+            _elementType = elementType;
+        }
+
+        public override Type DeclaringType => _elementType;
+        public override MemberTypes MemberType => MemberTypes.Custom;
+        public override string Name => "Element";
+        public override Type ReflectedType => _elementType;
+
+        public override object[] GetCustomAttributes(bool inherit)
+        {
+            return Array.Empty<object>();
+        }
+
+        public override object[] GetCustomAttributes(Type attributeType, bool inherit)
+        {
+            return Array.Empty<object>();
+        }
+
+        public override bool IsDefined(Type attributeType, bool inherit)
+        {
+            return false;
+        }
     }
 }

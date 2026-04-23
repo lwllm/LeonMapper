@@ -2,6 +2,9 @@
 
 namespace LeonMapper.Convert.Converters;
 
+/// <summary>
+/// 将 short 类型转换为 sbyte 类型
+/// </summary>
 public class ShortToSByteConverter : IConverter<short, sbyte>
 {
     public sbyte Convert(short input)
@@ -14,6 +17,9 @@ public class ShortToSByteConverter : IConverter<short, sbyte>
     }
 }
 
+/// <summary>
+/// 将 short 类型转换为 byte 类型
+/// </summary>
 public class ShortToByteConverter : IConverter<short, byte>
 {
     public byte Convert(short input)
@@ -26,6 +32,9 @@ public class ShortToByteConverter : IConverter<short, byte>
     }
 }
 
+/// <summary>
+/// 将 short 类型转换为 ushort 类型
+/// </summary>
 public class ShortToUShortConverter : IConverter<short, ushort>
 {
     public ushort Convert(short input)
@@ -38,6 +47,9 @@ public class ShortToUShortConverter : IConverter<short, ushort>
     }
 }
 
+/// <summary>
+/// 将 short 类型转换为 int 类型
+/// </summary>
 [CommonConverter]
 public class ShortToIntConverter : IConverter<short, int>
 {
@@ -47,6 +59,9 @@ public class ShortToIntConverter : IConverter<short, int>
     }
 }
 
+/// <summary>
+/// 将 short 类型转换为 uint 类型
+/// </summary>
 public class ShortToUIntConverter : IConverter<short, uint>
 {
     public uint Convert(short input)
@@ -59,6 +74,9 @@ public class ShortToUIntConverter : IConverter<short, uint>
     }
 }
 
+/// <summary>
+/// 将 short 类型转换为 long 类型
+/// </summary>
 [CommonConverter]
 public class ShortToLongConverter : IConverter<short, long>
 {
@@ -68,6 +86,9 @@ public class ShortToLongConverter : IConverter<short, long>
     }
 }
 
+/// <summary>
+/// 将 short 类型转换为 ulong 类型
+/// </summary>
 public class ShortToULongConverter : IConverter<short, ulong>
 {
     public ulong Convert(short input)
@@ -80,6 +101,9 @@ public class ShortToULongConverter : IConverter<short, ulong>
     }
 }
 
+/// <summary>
+/// 将 short 类型转换为 float 类型
+/// </summary>
 public class ShortToFloatConverter : IConverter<short, float>
 {
     public float Convert(short input)
@@ -88,6 +112,9 @@ public class ShortToFloatConverter : IConverter<short, float>
     }
 }
 
+/// <summary>
+/// 将 short 类型转换为 double 类型
+/// </summary>
 [CommonConverter]
 public class ShortToDoubleConverter : IConverter<short, double>
 {
@@ -97,6 +124,9 @@ public class ShortToDoubleConverter : IConverter<short, double>
     }
 }
 
+/// <summary>
+/// 将 short 类型转换为 decimal 类型
+/// </summary>
 [CommonConverter]
 public class ShortToDecimalConverter : IConverter<short, decimal>
 {
@@ -106,18 +136,25 @@ public class ShortToDecimalConverter : IConverter<short, decimal>
     }
 }
 
+/// <summary>
+/// 将 short 类型转换为 char 类型
+/// </summary>
 public class ShortToCharConverter : IConverter<short, char>
 {
     public char Convert(short input)
     {
-        if (input < char.MinValue || input > char.MaxValue)
+        if (input < 0)
         {
             throw new OverflowException();
         }
+
         return (char)input;
     }
 }
 
+/// <summary>
+/// 将 short 类型转换为 bool 类型
+/// </summary>
 [CommonConverter]
 public class ShortToBoolConverter : IConverter<short, bool>
 {
@@ -127,6 +164,9 @@ public class ShortToBoolConverter : IConverter<short, bool>
     }
 }
 
+/// <summary>
+/// 将 short 类型转换为 IntPtr 类型
+/// </summary>
 public class ShortToIntPtrConverter : IConverter<short, IntPtr>
 {
     public IntPtr Convert(short input)
@@ -135,6 +175,9 @@ public class ShortToIntPtrConverter : IConverter<short, IntPtr>
     }
 }
 
+/// <summary>
+/// 将 short 类型转换为 UIntPtr 类型
+/// </summary>
 public class ShortToUIntPtrConverter : IConverter<short, UIntPtr>
 {
     public UIntPtr Convert(short input)
@@ -147,6 +190,9 @@ public class ShortToUIntPtrConverter : IConverter<short, UIntPtr>
     }
 }
 
+/// <summary>
+/// 将 short 类型转换为 string 类型
+/// </summary>
 [CommonConverter]
 public class ShortToStringConverter : IConverter<short, string>
 {

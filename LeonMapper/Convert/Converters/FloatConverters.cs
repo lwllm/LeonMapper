@@ -2,6 +2,9 @@
 
 namespace LeonMapper.Convert.Converters;
 
+/// <summary>
+/// 将 float 类型转换为 sbyte 类型
+/// </summary>
 public class FloatToSbyteConverter : IConverter<float, sbyte>
 {
     public sbyte Convert(float input)
@@ -15,6 +18,9 @@ public class FloatToSbyteConverter : IConverter<float, sbyte>
     }
 }
 
+/// <summary>
+/// 将 float 类型转换为 byte 类型
+/// </summary>
 public class FloatToByteConverter : IConverter<float, byte>
 {
     public byte Convert(float input)
@@ -28,6 +34,9 @@ public class FloatToByteConverter : IConverter<float, byte>
     }
 }
 
+/// <summary>
+/// 将 float 类型转换为 short 类型
+/// </summary>
 public class FloatToShortConverter : IConverter<float, short>
 {
     public short Convert(float input)
@@ -41,6 +50,9 @@ public class FloatToShortConverter : IConverter<float, short>
     }
 }
 
+/// <summary>
+/// 将 float 类型转换为 ushort 类型
+/// </summary>
 public class FloatToUshortConverter : IConverter<float, ushort>
 {
     public ushort Convert(float input)
@@ -54,6 +66,9 @@ public class FloatToUshortConverter : IConverter<float, ushort>
     }
 }
 
+/// <summary>
+/// 将 float 类型转换为 int 类型
+/// </summary>
 public class FloatToIntConverter : IConverter<float, int>
 {
     public int Convert(float input)
@@ -67,6 +82,9 @@ public class FloatToIntConverter : IConverter<float, int>
     }
 }
 
+/// <summary>
+/// 将 float 类型转换为 uint 类型
+/// </summary>
 public class FloatToUintConverter : IConverter<float, uint>
 {
     public uint Convert(float input)
@@ -80,6 +98,9 @@ public class FloatToUintConverter : IConverter<float, uint>
     }
 }
 
+/// <summary>
+/// 将 float 类型转换为 long 类型
+/// </summary>
 public class FloatToLongConverter : IConverter<float, long>
 {
     public long Convert(float input)
@@ -93,6 +114,9 @@ public class FloatToLongConverter : IConverter<float, long>
     }
 }
 
+/// <summary>
+/// 将 float 类型转换为 ulong 类型
+/// </summary>
 public class FloatToUlongConverter : IConverter<float, ulong>
 {
     public ulong Convert(float input)
@@ -106,6 +130,9 @@ public class FloatToUlongConverter : IConverter<float, ulong>
     }
 }
 
+/// <summary>
+/// 将 float 类型转换为 double 类型
+/// </summary>
 [CommonConverter]
 public class FloatToDoubleConverter : IConverter<float, double>
 {
@@ -115,6 +142,9 @@ public class FloatToDoubleConverter : IConverter<float, double>
     }
 }
 
+/// <summary>
+/// 将 float 类型转换为 decimal 类型
+/// </summary>
 [CommonConverter]
 public class FloatToDecimalConverter : IConverter<float, decimal>
 {
@@ -124,6 +154,9 @@ public class FloatToDecimalConverter : IConverter<float, decimal>
     }
 }
 
+/// <summary>
+/// 将 float 类型转换为 char 类型
+/// </summary>
 public class FloatToCharConverter : IConverter<float, char>
 {
     public char Convert(float input)
@@ -132,6 +165,9 @@ public class FloatToCharConverter : IConverter<float, char>
     }
 }
 
+/// <summary>
+/// 将 float 类型转换为 bool 类型
+/// </summary>
 public class FloatToBoolConverter : IConverter<float, bool>
 {
     public bool Convert(float input)
@@ -140,6 +176,9 @@ public class FloatToBoolConverter : IConverter<float, bool>
     }
 }
 
+/// <summary>
+/// 将 float 类型转换为 IntPtr 类型
+/// </summary>
 public class FloatToIntPtrConverter : IConverter<float, IntPtr>
 {
     public IntPtr Convert(float input)
@@ -148,6 +187,9 @@ public class FloatToIntPtrConverter : IConverter<float, IntPtr>
     }
 }
 
+/// <summary>
+/// 将 float 类型转换为 UIntPtr 类型
+/// </summary>
 public class FloatToUIntPtrConverter : IConverter<float, UIntPtr>
 {
     public UIntPtr Convert(float input)
@@ -156,6 +198,9 @@ public class FloatToUIntPtrConverter : IConverter<float, UIntPtr>
     }
 }
 
+/// <summary>
+/// 将 float 类型转换为 string 类型
+/// </summary>
 [CommonConverter]
 public class FloatToStringConverter : IConverter<float, string>
 {

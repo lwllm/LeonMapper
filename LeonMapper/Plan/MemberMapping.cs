@@ -20,7 +20,7 @@ public class MemberMapping
     public object? Converter { get; }
 
     /// <summary>嵌套映射计划（仅 Complex 策略有值）</summary>
-    public TypeMappingPlan? NestedPlan { get; set; }
+    public TypeMappingPlan? NestedPlan { get; }
 
     public MemberMapping(MemberInfo sourceMember, MemberInfo targetMember, MappingStrategy strategy,
         object? converter = null, TypeMappingPlan? nestedPlan = null)
@@ -38,6 +38,7 @@ public class MemberMapping
         {
             MappingStrategy.Convert => $"Convert[{Converter?.GetType().Name}]",
             MappingStrategy.Complex => "Complex",
+            MappingStrategy.Collection => "Collection",
             _ => "Direct"
         };
         return $"{SourceMember.Name} -> {TargetMember.Name} ({strategyStr})";

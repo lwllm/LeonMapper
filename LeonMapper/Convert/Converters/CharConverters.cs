@@ -2,6 +2,9 @@
 
 namespace LeonMapper.Convert.Converters;
 
+/// <summary>
+/// 将 char 类型转换为 sbyte 类型
+/// </summary>
 public class CharToSByteConverter : IConverter<char, sbyte>
 {
     public sbyte Convert(char input)
@@ -14,6 +17,9 @@ public class CharToSByteConverter : IConverter<char, sbyte>
     }
 }
 
+/// <summary>
+/// 将 char 类型转换为 byte 类型
+/// </summary>
 [CommonConverter]
 public class CharToByteConverter : IConverter<char, byte>
 {
@@ -27,6 +33,9 @@ public class CharToByteConverter : IConverter<char, byte>
     }
 }
 
+/// <summary>
+/// 将 char 类型转换为 short 类型
+/// </summary>
 [CommonConverter]
 public class CharToShortConverter : IConverter<char, short>
 {
@@ -36,6 +45,9 @@ public class CharToShortConverter : IConverter<char, short>
     }
 }
 
+/// <summary>
+/// 将 char 类型转换为 ushort 类型
+/// </summary>
 public class CharToUShortConverter : IConverter<char, ushort>
 {
     public ushort Convert(char input)
@@ -44,6 +56,9 @@ public class CharToUShortConverter : IConverter<char, ushort>
     }
 }
 
+/// <summary>
+/// 将 char 类型转换为 int 类型
+/// </summary>
 [CommonConverter]
 public class CharToIntConverter : IConverter<char, int>
 {
@@ -53,6 +68,9 @@ public class CharToIntConverter : IConverter<char, int>
     }
 }
 
+/// <summary>
+/// 将 char 类型转换为 uint 类型
+/// </summary>
 public class CharToUIntConverter : IConverter<char, uint>
 {
     public uint Convert(char input)
@@ -61,6 +79,9 @@ public class CharToUIntConverter : IConverter<char, uint>
     }
 }
 
+/// <summary>
+/// 将 char 类型转换为 long 类型
+/// </summary>
 public class CharToLongConverter : IConverter<char, long>
 {
     public long Convert(char input)
@@ -69,6 +90,9 @@ public class CharToLongConverter : IConverter<char, long>
     }
 }
 
+/// <summary>
+/// 将 char 类型转换为 ulong 类型
+/// </summary>
 public class CharToULongConverter : IConverter<char, ulong>
 {
     public ulong Convert(char input)
@@ -76,6 +100,9 @@ public class CharToULongConverter : IConverter<char, ulong>
         return input;
     }
 }
+/// <summary>
+/// 将 char 类型转换为 float 类型
+/// </summary>
 public class CharToFloatConverter : IConverter<char, float>
 {
     public float Convert(char input)
@@ -84,6 +111,9 @@ public class CharToFloatConverter : IConverter<char, float>
     }
 }
 
+/// <summary>
+/// 将 char 类型转换为 double 类型
+/// </summary>
 public class CharToDoubleConverter : IConverter<char, double>
 {
     public double Convert(char input)
@@ -92,6 +122,9 @@ public class CharToDoubleConverter : IConverter<char, double>
     }
 }
 
+/// <summary>
+/// 将 char 类型转换为 decimal 类型
+/// </summary>
 public class CharToDecimalConverter : IConverter<char, decimal>
 {
     public decimal Convert(char input)
@@ -100,6 +133,9 @@ public class CharToDecimalConverter : IConverter<char, decimal>
     }
 }
 
+/// <summary>
+/// 将 char 类型转换为 bool 类型
+/// </summary>
 public class CharToBoolConverter : IConverter<char, bool>
 {
     public bool Convert(char input)
@@ -108,6 +144,9 @@ public class CharToBoolConverter : IConverter<char, bool>
     }
 }
 
+/// <summary>
+/// 将 char 类型转换为 IntPtr 类型
+/// </summary>
 public class CharToIntPtrConverter : IConverter<char, IntPtr>
 {
     public IntPtr Convert(char input)
@@ -126,6 +165,9 @@ public class CharToIntPtrConverter : IConverter<char, IntPtr>
     }
 }
 
+/// <summary>
+/// 将 char 类型转换为 UIntPtr 类型
+/// </summary>
 public class CharToUIntPtrConverter : IConverter<char, UIntPtr>
 {
     public UIntPtr Convert(char input)
@@ -144,6 +186,9 @@ public class CharToUIntPtrConverter : IConverter<char, UIntPtr>
     }
 }
 
+/// <summary>
+/// 将 char 类型转换为 string 类型
+/// </summary>
 [CommonConverter]
 public class CharToStringConverter : IConverter<char, string>
 {

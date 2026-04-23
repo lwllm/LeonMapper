@@ -1,7 +1,7 @@
 namespace LeonMapper.Plan;
 
 /// <summary>
-/// 转换器范围
+/// 转换器查找范围
 /// </summary>
 public enum ConverterScope
 {

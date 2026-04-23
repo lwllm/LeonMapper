@@ -2,6 +2,9 @@
 
 namespace LeonMapper.Convert.Converters;
 
+/// <summary>
+/// 将 double 类型转换为 sbyte 类型
+/// </summary>
 public class DoubleToSByteConverter : IConverter<double, sbyte>
 {
     public sbyte Convert(double input)
@@ -15,6 +18,9 @@ public class DoubleToSByteConverter : IConverter<double, sbyte>
     }
 }
 
+/// <summary>
+/// 将 double 类型转换为 byte 类型
+/// </summary>
 public class DoubleToByteConverter : IConverter<double, byte>
 {
     public byte Convert(double input)
@@ -28,6 +34,9 @@ public class DoubleToByteConverter : IConverter<double, byte>
     }
 }
 
+/// <summary>
+/// 将 double 类型转换为 short 类型
+/// </summary>
 public class DoubleToShortConverter : IConverter<double, short>
 {
     public short Convert(double input)
@@ -41,6 +50,9 @@ public class DoubleToShortConverter : IConverter<double, short>
     }
 }
 
+/// <summary>
+/// 将 double 类型转换为 ushort 类型
+/// </summary>
 public class DoubleToUShortConverter : IConverter<double, ushort>
 {
     public ushort Convert(double input)
@@ -54,6 +66,9 @@ public class DoubleToUShortConverter : IConverter<double, ushort>
     }
 }
 
+/// <summary>
+/// 将 double 类型转换为 int 类型
+/// </summary>
 [CommonConverter]
 public class DoubleToIntConverter : IConverter<double, int>
 {
@@ -68,6 +83,9 @@ public class DoubleToIntConverter : IConverter<double, int>
     }
 }
 
+/// <summary>
+/// 将 double 类型转换为 uint 类型
+/// </summary>
 public class DoubleToUIntConverter : IConverter<double, uint>
 {
     public uint Convert(double input)
@@ -81,6 +99,9 @@ public class DoubleToUIntConverter : IConverter<double, uint>
     }
 }
 
+/// <summary>
+/// 将 double 类型转换为 long 类型
+/// </summary>
 [CommonConverter]
 public class DoubleToLongConverter : IConverter<double, long>
 {
@@ -95,6 +116,9 @@ public class DoubleToLongConverter : IConverter<double, long>
     }
 }
 
+/// <summary>
+/// 将 double 类型转换为 ulong 类型
+/// </summary>
 public class DoubleToULongConverter : IConverter<double, ulong>
 {
     public ulong Convert(double input)
@@ -108,6 +132,9 @@ public class DoubleToULongConverter : IConverter<double, ulong>
     }
 }
 
+/// <summary>
+/// 将 double 类型转换为 float 类型
+/// </summary>
 public class DoubleToFloatConverter : IConverter<double, float>
 {
     public float Convert(double input)
@@ -121,6 +148,9 @@ public class DoubleToFloatConverter : IConverter<double, float>
     }
 }
 
+/// <summary>
+/// 将 double 类型转换为 decimal 类型
+/// </summary>
 [CommonConverter]
 public class DoubleToDecimalConverter : IConverter<double, decimal>
 {
@@ -130,6 +160,9 @@ public class DoubleToDecimalConverter : IConverter<double, decimal>
     }
 }
 
+/// <summary>
+/// 将 double 类型转换为 char 类型
+/// </summary>
 public class DoubleToCharConverter : IConverter<double, char>
 {
     public char Convert(double input)
@@ -143,6 +176,9 @@ public class DoubleToCharConverter : IConverter<double, char>
     }
 }
 
+/// <summary>
+/// 将 double 类型转换为 bool 类型
+/// </summary>
 public class DoubleToBoolConverter : IConverter<double, bool>
 {
     public bool Convert(double input)
@@ -151,6 +187,9 @@ public class DoubleToBoolConverter : IConverter<double, bool>
     }
 }
 
+/// <summary>
+/// 将 double 类型转换为 IntPtr 类型
+/// </summary>
 public class DoubleToIntPtrConverter : IConverter<double, IntPtr>
 {
     public IntPtr Convert(double input)
@@ -168,6 +207,9 @@ public class DoubleToIntPtrConverter : IConverter<double, IntPtr>
     }
 }
 
+/// <summary>
+/// 将 double 类型转换为 UIntPtr 类型
+/// </summary>
 public class DoubleToUIntPtrConverter : IConverter<double, UIntPtr>
 {
     public UIntPtr Convert(double input)
@@ -185,6 +227,9 @@ public class DoubleToUIntPtrConverter : IConverter<double, UIntPtr>
     }
 }
 
+/// <summary>
+/// 将 double 类型转换为 string 类型
+/// </summary>
 [CommonConverter]
 public class DoubleToStringConverter : IConverter<double, string>
 {

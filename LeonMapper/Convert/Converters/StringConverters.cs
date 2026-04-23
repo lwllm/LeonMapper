@@ -2,6 +2,9 @@
 
 namespace LeonMapper.Convert.Converters;
 
+/// <summary>
+/// 将 string 类型转换为 int 类型
+/// </summary>
 [CommonConverter]
 public class StringToIntConverter : IConverter<string, int>
 {
@@ -11,6 +14,9 @@ public class StringToIntConverter : IConverter<string, int>
     }
 }
 
+/// <summary>
+/// 将 string 类型转换为 uint 类型
+/// </summary>
 public class StringToUintConverter : IConverter<string, uint>
 {
     public uint Convert(string input)
@@ -19,6 +25,9 @@ public class StringToUintConverter : IConverter<string, uint>
     }
 }
 
+/// <summary>
+/// 将 string 类型转换为 short 类型
+/// </summary>
 [CommonConverter]
 public class StringToShortConverter : IConverter<string, short>
 {
@@ -28,6 +37,9 @@ public class StringToShortConverter : IConverter<string, short>
     }
 }
 
+/// <summary>
+/// 将 string 类型转换为 ushort 类型
+/// </summary>
 public class StringToUshortConverter : IConverter<string, ushort>
 {
     public ushort Convert(string input)
@@ -36,6 +48,9 @@ public class StringToUshortConverter : IConverter<string, ushort>
     }
 }
 
+/// <summary>
+/// 将 string 类型转换为 long 类型
+/// </summary>
 [CommonConverter]
 public class StringToLongConverter : IConverter<string, long>
 {
@@ -45,6 +60,9 @@ public class StringToLongConverter : IConverter<string, long>
     }
 }
 
+/// <summary>
+/// 将 string 类型转换为 ulong 类型
+/// </summary>
 public class StringToUlongConverter : IConverter<string, ulong>
 {
     public ulong Convert(string input)
@@ -53,6 +71,9 @@ public class StringToUlongConverter : IConverter<string, ulong>
     }
 }
 
+/// <summary>
+/// 将 string 类型转换为 double 类型
+/// </summary>
 [CommonConverter]
 public class StringToDoubleConverter : IConverter<string, double>
 {
@@ -62,6 +83,9 @@ public class StringToDoubleConverter : IConverter<string, double>
     }
 }
 
+/// <summary>
+/// 将 string 类型转换为 float 类型
+/// </summary>
 public class StringToFloatConverter : IConverter<string, float>
 {
     public float Convert(string input)
@@ -70,6 +94,9 @@ public class StringToFloatConverter : IConverter<string, float>
     }
 }
 
+/// <summary>
+/// 将 string 类型转换为 decimal 类型
+/// </summary>
 [CommonConverter]
 public class StringToDecimalConverter : IConverter<string, decimal>
 {
@@ -79,6 +106,9 @@ public class StringToDecimalConverter : IConverter<string, decimal>
     }
 }
 
+/// <summary>
+/// 将 string 类型转换为 DateTime 类型
+/// </summary>
 [CommonConverter]
 public class StringToDateTimeConverter : IConverter<string, DateTime>
 {
@@ -96,6 +126,9 @@ public class StringToDateTimeConverter : IConverter<string, DateTime>
 //     }
 // }
 
+/// <summary>
+/// 将 string 类型转换为 sbyte 类型
+/// </summary>
 public class StringToSbyteConverter : IConverter<string, sbyte>
 {
     public sbyte Convert(string input)
@@ -104,6 +137,9 @@ public class StringToSbyteConverter : IConverter<string, sbyte>
     }
 }
 
+/// <summary>
+/// 将 string 类型转换为 byte 类型
+/// </summary>
 public class StringToByteConverter : IConverter<string, byte>
 {
     public byte Convert(string input)
@@ -112,6 +148,9 @@ public class StringToByteConverter : IConverter<string, byte>
     }
 }
 
+/// <summary>
+/// 将 string 类型转换为 bool 类型
+/// </summary>
 [CommonConverter]
 public class StringToBoolConverter : IConverter<string, bool>
 {
@@ -121,6 +160,9 @@ public class StringToBoolConverter : IConverter<string, bool>
     }
 }
 
+/// <summary>
+/// 将 string 类型转换为 char 类型
+/// </summary>
 public class StringToCharConverter : IConverter<string, char>
 {
     public char Convert(string input)
@@ -129,6 +171,9 @@ public class StringToCharConverter : IConverter<string, char>
     }
 }
 
+/// <summary>
+/// 将 string 类型转换为 IntPtr 类型
+/// </summary>
 public class StringToIntPtrConverter : IConverter<string, IntPtr>
 {
     public IntPtr Convert(string input)
@@ -137,6 +182,9 @@ public class StringToIntPtrConverter : IConverter<string, IntPtr>
     }
 }
 
+/// <summary>
+/// 将 string 类型转换为 UIntPtr 类型
+/// </summary>
 public class StringToUIntPtrConverter : IConverter<string, UIntPtr>
 {
     public UIntPtr Convert(string input)

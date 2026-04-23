@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Reflection;
 using LeonMapper.Plan;
 using LeonMapper.Plan.Builder;
@@ -9,66 +10,52 @@ namespace LeonMapper.Compilers;
 /// </summary>
 internal static class CachedMapperFactory
 {
-    private static readonly Dictionary<(Type, Type), object> _mapperCache = new();
-    private static readonly Dictionary<(Type, Type), Delegate> _mapFuncCache = new();
-    private static readonly object _lock = new();
+    private static readonly ConcurrentDictionary<(Type, Type), object> _mapperCache = new();
+    private static readonly ConcurrentDictionary<(Type, Type), Delegate> _mapFuncCache = new();
 
     /// <summary>
-    /// 获取或创建映射器实例
+    /// 获取或创建映射器实例（线程安全）
     /// </summary>
+    /// <param name="sourceType">源类型</param>
+    /// <param name="targetType">目标类型</param>
+    /// <returns>缓存或新建的 Mapper 实例</returns>
     public static object GetOrCreateMapper(Type sourceType, Type targetType)
     {
         var key = (sourceType, targetType);
-        lock (_lock)
-        {
-            if (_mapperCache.TryGetValue(key, out var cached))
-                return cached;
-        }
-
-        var mapper = CreateMapper(sourceType, targetType);
-
-        lock (_lock)
-        {
-            _mapperCache[key] = mapper;
-        }
-
-        return mapper;
+        return _mapperCache.GetOrAdd(key, k => CreateMapper(k.Item1, k.Item2));
     }
 
     /// <summary>
-    /// 获取或创建映射委托（用于 ExpressionCompiler 的表达式树）
+    /// 获取或创建映射委托（用于 ExpressionCompiler 的表达式树，线程安全）
     /// </summary>
+    /// <param name="sourceType">源类型</param>
+    /// <param name="targetType">目标类型</param>
+    /// <returns>缓存或新建的映射委托</returns>
     public static Delegate GetOrCreateMapFunc(Type sourceType, Type targetType)
     {
         var key = (sourceType, targetType);
-        lock (_lock)
+        return _mapFuncCache.GetOrAdd(key, k =>
         {
-            if (_mapFuncCache.TryGetValue(key, out var cached))
-                return cached;
-        }
-
-        var mapper = GetOrCreateMapper(sourceType, targetType);
-        var mapToMethod = mapper.GetType().GetMethod("MapTo")!;
-
-        // 创建委托：Func<TSource, TTarget>
-        var funcType = typeof(Func<,>).MakeGenericType(sourceType, targetType);
-        var mapFunc = Delegate.CreateDelegate(funcType, mapper, mapToMethod);
-
-        lock (_lock)
-        {
-            _mapFuncCache[key] = mapFunc;
-        }
-
-        return mapFunc;
+            var mapper = GetOrCreateMapper(k.Item1, k.Item2);
+            var mapToMethod = mapper.GetType().GetMethod("MapTo")
+                ?? throw new InvalidOperationException($"Mapper<{k.Item1.Name}, {k.Item2.Name}> 缺少 MapTo 方法");
+            var funcType = typeof(Func<,>).MakeGenericType(k.Item1, k.Item2);
+            return Delegate.CreateDelegate(funcType, mapper, mapToMethod);
+        });
     }
 
+    /// <summary>
+    /// 通过反射创建指定类型的 Mapper 实例
+    /// </summary>
     private static object CreateMapper(Type sourceType, Type targetType)
     {
         var plan = MappingPlanBuilder.Build(sourceType, targetType);
         var mapperType = typeof(Mapper<,>).MakeGenericType(sourceType, targetType);
         var constructor = mapperType.GetConstructor(new[] { typeof(TypeMappingPlan) });
         if (constructor != null)
+        {
             return constructor.Invoke(new object[] { plan });
+        }
 
         throw new InvalidOperationException(
             $"无法创建 {sourceType.Name} -> {targetType.Name} 的映射器，缺少接受 TypeMappingPlan 的构造函数");

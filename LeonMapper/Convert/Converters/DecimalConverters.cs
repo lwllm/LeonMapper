@@ -2,6 +2,9 @@
 
 namespace LeonMapper.Convert.Converters;
 
+/// <summary>
+/// 将 decimal 类型转换为 sbyte 类型
+/// </summary>
 public class DecimalToSbyteConverter : IConverter<decimal, sbyte>
 {
     public sbyte Convert(decimal input)
@@ -15,6 +18,9 @@ public class DecimalToSbyteConverter : IConverter<decimal, sbyte>
     }
 }
 
+/// <summary>
+/// 将 decimal 类型转换为 byte 类型
+/// </summary>
 public class DecimalToByteConverter : IConverter<decimal, byte>
 {
     public byte Convert(decimal input)
@@ -28,6 +34,9 @@ public class DecimalToByteConverter : IConverter<decimal, byte>
     }
 }
 
+/// <summary>
+/// 将 decimal 类型转换为 short 类型
+/// </summary>
 [CommonConverter]
 public class DecimalToShortConverter : IConverter<decimal, short>
 {
@@ -42,6 +51,9 @@ public class DecimalToShortConverter : IConverter<decimal, short>
     }
 }
 
+/// <summary>
+/// 将 decimal 类型转换为 ushort 类型
+/// </summary>
 public class DecimalToUshortConverter : IConverter<decimal, ushort>
 {
     public ushort Convert(decimal input)
@@ -55,6 +67,9 @@ public class DecimalToUshortConverter : IConverter<decimal, ushort>
     }
 }
 
+/// <summary>
+/// 将 decimal 类型转换为 int 类型
+/// </summary>
 [CommonConverter]
 public class DecimalToIntConverter : IConverter<decimal, int>
 {
@@ -69,6 +84,9 @@ public class DecimalToIntConverter : IConverter<decimal, int>
     }
 }
 
+/// <summary>
+/// 将 decimal 类型转换为 uint 类型
+/// </summary>
 public class DecimalToUintConverter : IConverter<decimal, uint>
 {
     public uint Convert(decimal input)
@@ -82,6 +100,9 @@ public class DecimalToUintConverter : IConverter<decimal, uint>
     }
 }
 
+/// <summary>
+/// 将 decimal 类型转换为 long 类型
+/// </summary>
 [CommonConverter]
 public class DecimalToLongConverter : IConverter<decimal, long>
 {
@@ -96,6 +117,9 @@ public class DecimalToLongConverter : IConverter<decimal, long>
     }
 }
 
+/// <summary>
+/// 将 decimal 类型转换为 ulong 类型
+/// </summary>
 public class DecimalToUlongConverter : IConverter<decimal, ulong>
 {
     public ulong Convert(decimal input)
@@ -109,6 +133,9 @@ public class DecimalToUlongConverter : IConverter<decimal, ulong>
     }
 }
 
+/// <summary>
+/// 将 decimal 类型转换为 float 类型
+/// </summary>
 public class DecimalToFloatConverter : IConverter<decimal, float>
 {
     public float Convert(decimal input)
@@ -122,6 +149,9 @@ public class DecimalToFloatConverter : IConverter<decimal, float>
     }
 }
 
+/// <summary>
+/// 将 decimal 类型转换为 double 类型
+/// </summary>
 [CommonConverter]
 public class DecimalToDoubleConverter : IConverter<decimal, double>
 {
@@ -136,6 +166,9 @@ public class DecimalToDoubleConverter : IConverter<decimal, double>
     }
 }
 
+/// <summary>
+/// 将 decimal 类型转换为 char 类型
+/// </summary>
 public class DecimalToCharConverter : IConverter<decimal, char>
 {
     public char Convert(decimal input)
@@ -149,6 +182,9 @@ public class DecimalToCharConverter : IConverter<decimal, char>
     }
 }
 
+/// <summary>
+/// 将 decimal 类型转换为 bool 类型
+/// </summary>
 public class DecimalToBoolConverter : IConverter<decimal, bool>
 {
     public bool Convert(decimal input)
@@ -157,6 +193,9 @@ public class DecimalToBoolConverter : IConverter<decimal, bool>
     }
 }
 
+/// <summary>
+/// 将 decimal 类型转换为 IntPtr 类型
+/// </summary>
 public class DecimalToIntPtrConverter : IConverter<decimal, IntPtr>
 {
     public IntPtr Convert(decimal input)
@@ -175,6 +214,9 @@ public class DecimalToIntPtrConverter : IConverter<decimal, IntPtr>
     }
 }
 
+/// <summary>
+/// 将 decimal 类型转换为 UIntPtr 类型
+/// </summary>
 public class DecimalToUIntPtrConverter : IConverter<decimal, UIntPtr>
 {
     public UIntPtr Convert(decimal input)
@@ -193,6 +235,9 @@ public class DecimalToUIntPtrConverter : IConverter<decimal, UIntPtr>
     }
 }
 
+/// <summary>
+/// 将 decimal 类型转换为 string 类型
+/// </summary>
 [CommonConverter]
 public class DecimalToStringConverter : IConverter<decimal, string>
 {

@@ -2,6 +2,9 @@
 
 namespace LeonMapper.Convert.Converters;
 
+/// <summary>
+/// 将 IntPtr 类型转换为 sbyte 类型
+/// </summary>
 public class IntPtrToSbyteConverter : IConverter<IntPtr, sbyte>
 {
     public sbyte Convert(IntPtr input)
@@ -14,6 +17,9 @@ public class IntPtrToSbyteConverter : IConverter<IntPtr, sbyte>
     }
 }
 
+/// <summary>
+/// 将 IntPtr 类型转换为 byte 类型
+/// </summary>
 public class IntPtrToByteConverter : IConverter<IntPtr, byte>
 {
     public byte Convert(IntPtr input)
@@ -26,6 +32,9 @@ public class IntPtrToByteConverter : IConverter<IntPtr, byte>
     }
 }
 
+/// <summary>
+/// 将 IntPtr 类型转换为 short 类型
+/// </summary>
 public class IntPtrToShortConverter : IConverter<IntPtr, short>
 {
     public short Convert(IntPtr input)
@@ -38,6 +47,9 @@ public class IntPtrToShortConverter : IConverter<IntPtr, short>
     }
 }
 
+/// <summary>
+/// 将 IntPtr 类型转换为 ushort 类型
+/// </summary>
 public class IntPtrToUshortConverter : IConverter<IntPtr, ushort>
 {
     public ushort Convert(IntPtr input)
@@ -50,6 +62,9 @@ public class IntPtrToUshortConverter : IConverter<IntPtr, ushort>
     }
 }
 
+/// <summary>
+/// 将 IntPtr 类型转换为 int 类型
+/// </summary>
 public class IntPtrToIntConverter : IConverter<IntPtr, int>
 {
     public int Convert(IntPtr input)
@@ -62,6 +77,9 @@ public class IntPtrToIntConverter : IConverter<IntPtr, int>
     }
 }
 
+/// <summary>
+/// 将 IntPtr 类型转换为 uint 类型
+/// </summary>
 public class IntPtrToUintConverter : IConverter<IntPtr, uint>
 {
     public uint Convert(IntPtr input)
@@ -74,6 +92,9 @@ public class IntPtrToUintConverter : IConverter<IntPtr, uint>
     }
 }
 
+/// <summary>
+/// 将 IntPtr 类型转换为 long 类型
+/// </summary>
 public class IntPtrToLongConverter : IConverter<IntPtr, long>
 {
     public long Convert(IntPtr input)
@@ -82,6 +103,9 @@ public class IntPtrToLongConverter : IConverter<IntPtr, long>
     }
 }
 
+/// <summary>
+/// 将 IntPtr 类型转换为 ulong 类型
+/// </summary>
 public class IntPtrToUlongConverter : IConverter<IntPtr, ulong>
 {
     public ulong Convert(IntPtr input)
@@ -94,6 +118,9 @@ public class IntPtrToUlongConverter : IConverter<IntPtr, ulong>
     }
 }
 
+/// <summary>
+/// 将 IntPtr 类型转换为 decimal 类型
+/// </summary>
 public class IntPtrToDecimalConverter : IConverter<IntPtr, decimal>
 {
     public decimal Convert(IntPtr input)
@@ -106,6 +133,9 @@ public class IntPtrToDecimalConverter : IConverter<IntPtr, decimal>
     }
 }
 
+/// <summary>
+/// 将 IntPtr 类型转换为 bool 类型
+/// </summary>
 public class IntPtrToBoolConverter : IConverter<IntPtr, bool>
 {
     public bool Convert(IntPtr input)
@@ -114,6 +144,9 @@ public class IntPtrToBoolConverter : IConverter<IntPtr, bool>
     }
 }
 
+/// <summary>
+/// 将 IntPtr 类型转换为 UIntPtr 类型
+/// </summary>
 public class IntPtrToUIntPtrConverter : IConverter<IntPtr, UIntPtr>
 {
     public UIntPtr Convert(IntPtr input)
@@ -126,6 +159,9 @@ public class IntPtrToUIntPtrConverter : IConverter<IntPtr, UIntPtr>
     }
 }
 
+/// <summary>
+/// 将 IntPtr 类型转换为 string 类型
+/// </summary>
 [CommonConverter]
 public class IntPtrToStringConverter : IConverter<IntPtr, string>
 {

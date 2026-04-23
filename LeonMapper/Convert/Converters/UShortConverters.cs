@@ -2,6 +2,9 @@
 
 namespace LeonMapper.Convert.Converters;
 
+/// <summary>
+/// 将 ushort 类型转换为 sbyte 类型
+/// </summary>
 public class UShortToSByteConverter : IConverter<ushort, sbyte>
 {
     public sbyte Convert(ushort input)
@@ -14,6 +17,9 @@ public class UShortToSByteConverter : IConverter<ushort, sbyte>
     }
 }
 
+/// <summary>
+/// 将 ushort 类型转换为 byte 类型
+/// </summary>
 public class UShortToByteConverter : IConverter<ushort, byte>
 {
     public byte Convert(ushort input)
@@ -26,6 +32,9 @@ public class UShortToByteConverter : IConverter<ushort, byte>
     }
 }
 
+/// <summary>
+/// 将 ushort 类型转换为 short 类型
+/// </summary>
 public class UShortToShortConverter : IConverter<ushort, short>
 {
     public short Convert(ushort input)
@@ -38,6 +47,9 @@ public class UShortToShortConverter : IConverter<ushort, short>
     }
 }
 
+/// <summary>
+/// 将 ushort 类型转换为 int 类型
+/// </summary>
 public class UShortToIntConverter : IConverter<ushort, int>
 {
     public int Convert(ushort input)
@@ -46,6 +58,9 @@ public class UShortToIntConverter : IConverter<ushort, int>
     }
 }
 
+/// <summary>
+/// 将 ushort 类型转换为 uint 类型
+/// </summary>
 public class UShortToUIntConverter : IConverter<ushort, uint>
 {
     public uint Convert(ushort input)
@@ -54,6 +69,9 @@ public class UShortToUIntConverter : IConverter<ushort, uint>
     }
 }
 
+/// <summary>
+/// 将 ushort 类型转换为 long 类型
+/// </summary>
 public class UShortToLongConverter : IConverter<ushort, long>
 {
     public long Convert(ushort input)
@@ -62,6 +80,9 @@ public class UShortToLongConverter : IConverter<ushort, long>
     }
 }
 
+/// <summary>
+/// 将 ushort 类型转换为 ulong 类型
+/// </summary>
 public class UShortToULongConverter : IConverter<ushort, ulong>
 {
     public ulong Convert(ushort input)
@@ -70,6 +91,9 @@ public class UShortToULongConverter : IConverter<ushort, ulong>
     }
 }
 
+/// <summary>
+/// 将 ushort 类型转换为 float 类型
+/// </summary>
 public class UShortToFloatConverter : IConverter<ushort, float>
 {
     public float Convert(ushort input)
@@ -82,6 +106,9 @@ public class UShortToFloatConverter : IConverter<ushort, float>
     }
 }
 
+/// <summary>
+/// 将 ushort 类型转换为 double 类型
+/// </summary>
 public class UShortToDoubleConverter : IConverter<ushort, double>
 {
     public double Convert(ushort input)
@@ -90,6 +117,9 @@ public class UShortToDoubleConverter : IConverter<ushort, double>
     }
 }
 
+/// <summary>
+/// 将 ushort 类型转换为 decimal 类型
+/// </summary>
 public class UShortToDecimalConverter : IConverter<ushort, decimal>
 {
     public decimal Convert(ushort input)
@@ -98,6 +128,9 @@ public class UShortToDecimalConverter : IConverter<ushort, decimal>
     }
 }
 
+/// <summary>
+/// 将 ushort 类型转换为 char 类型
+/// </summary>
 public class UShortToCharConverter : IConverter<ushort, char>
 {
     public char Convert(ushort input)
@@ -110,6 +143,9 @@ public class UShortToCharConverter : IConverter<ushort, char>
     }
 }
 
+/// <summary>
+/// 将 ushort 类型转换为 bool 类型
+/// </summary>
 public class UShortToBoolConverter : IConverter<ushort, bool>
 {
     public bool Convert(ushort input)
@@ -118,6 +154,9 @@ public class UShortToBoolConverter : IConverter<ushort, bool>
     }
 }
 
+/// <summary>
+/// 将 ushort 类型转换为 IntPtr 类型
+/// </summary>
 public class UShortToIntPtrConverter : IConverter<ushort, IntPtr>
 {
     public IntPtr Convert(ushort input)
@@ -126,6 +165,9 @@ public class UShortToIntPtrConverter : IConverter<ushort, IntPtr>
     }
 }
 
+/// <summary>
+/// 将 ushort 类型转换为 UIntPtr 类型
+/// </summary>
 public class UShortToUIntPtrConverter : IConverter<ushort, UIntPtr>
 {
     public UIntPtr Convert(ushort input)
@@ -134,6 +176,9 @@ public class UShortToUIntPtrConverter : IConverter<ushort, UIntPtr>
     }
 }
 
+/// <summary>
+/// 将 ushort 类型转换为 string 类型
+/// </summary>
 [CommonConverter]
 public class UShortToStringConverter : IConverter<ushort, string>
 {

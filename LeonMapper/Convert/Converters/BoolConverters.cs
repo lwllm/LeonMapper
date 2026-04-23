@@ -2,6 +2,9 @@
 
 namespace LeonMapper.Convert.Converters;
 
+/// <summary>
+/// 将 bool 类型转换为 sbyte 类型
+/// </summary>
 public class BoolToSByteConverter : IConverter<bool, sbyte>
 {
     public sbyte Convert(bool input)
@@ -10,6 +13,9 @@ public class BoolToSByteConverter : IConverter<bool, sbyte>
     }
 }
 
+/// <summary>
+/// 将 bool 类型转换为 byte 类型
+/// </summary>
 public class BoolToByteConverter : IConverter<bool, byte>
 {
     public byte Convert(bool input)
@@ -18,6 +24,9 @@ public class BoolToByteConverter : IConverter<bool, byte>
     }
 }
 
+/// <summary>
+/// 将 bool 类型转换为 short 类型
+/// </summary>
 [CommonConverter]
 public class BoolToShortConverter : IConverter<bool, short>
 {
@@ -27,6 +36,9 @@ public class BoolToShortConverter : IConverter<bool, short>
     }
 }
 
+/// <summary>
+/// 将 bool 类型转换为 ushort 类型
+/// </summary>
 public class BoolToUShortConverter : IConverter<bool, ushort>
 {
     public ushort Convert(bool input)
@@ -35,6 +47,9 @@ public class BoolToUShortConverter : IConverter<bool, ushort>
     }
 }
 
+/// <summary>
+/// 将 bool 类型转换为 int 类型
+/// </summary>
 [CommonConverter]
 public class BoolToIntConverter : IConverter<bool, int>
 {
@@ -44,6 +59,9 @@ public class BoolToIntConverter : IConverter<bool, int>
     }
 }
 
+/// <summary>
+/// 将 bool 类型转换为 uint 类型
+/// </summary>
 public class BoolToUIntConverter : IConverter<bool, uint>
 {
     public uint Convert(bool input)
@@ -52,6 +70,9 @@ public class BoolToUIntConverter : IConverter<bool, uint>
     }
 }
 
+/// <summary>
+/// 将 bool 类型转换为 long 类型
+/// </summary>
 public class BoolToLongConverter : IConverter<bool, long>
 {
     public long Convert(bool input)
@@ -60,6 +81,9 @@ public class BoolToLongConverter : IConverter<bool, long>
     }
 }
 
+/// <summary>
+/// 将 bool 类型转换为 ulong 类型
+/// </summary>
 public class BoolToULongConverter : IConverter<bool, ulong>
 {
     public ulong Convert(bool input)
@@ -68,6 +92,9 @@ public class BoolToULongConverter : IConverter<bool, ulong>
     }
 }
 
+/// <summary>
+/// 将 bool 类型转换为 float 类型
+/// </summary>
 public class BoolToFloatConverter : IConverter<bool, float>
 {
     public float Convert(bool input)
@@ -76,6 +103,9 @@ public class BoolToFloatConverter : IConverter<bool, float>
     }
 }
 
+/// <summary>
+/// 将 bool 类型转换为 double 类型
+/// </summary>
 public class BoolToDoubleConverter : IConverter<bool, double>
 {
     public double Convert(bool input)
@@ -84,6 +114,9 @@ public class BoolToDoubleConverter : IConverter<bool, double>
     }
 }
 
+/// <summary>
+/// 将 bool 类型转换为 decimal 类型
+/// </summary>
 public class BoolToDecimalConverter : IConverter<bool, decimal>
 {
     public decimal Convert(bool input)
@@ -92,6 +125,9 @@ public class BoolToDecimalConverter : IConverter<bool, decimal>
     }
 }
 
+/// <summary>
+/// 将 bool 类型转换为 char 类型
+/// </summary>
 public class BoolToCharConverter : IConverter<bool, char>
 {
     public char Convert(bool input)
@@ -100,22 +136,41 @@ public class BoolToCharConverter : IConverter<bool, char>
     }
 }
 
+/// <summary>
+/// 将 bool 类型转换为 IntPtr 类型
+/// </summary>
 public class BoolToIntPtrConverter : IConverter<bool, IntPtr>
 {
     public IntPtr Convert(bool input)
     {
-        return input ? new IntPtr(1) : IntPtr.Zero;
+        if (input)
+        {
+            return new IntPtr(1);
+        }
+
+        return IntPtr.Zero;
     }
 }
 
+/// <summary>
+/// 将 bool 类型转换为 UIntPtr 类型
+/// </summary>
 public class BoolToUIntPtrConverter : IConverter<bool, UIntPtr>
 {
     public UIntPtr Convert(bool input)
     {
-        return input ? new UIntPtr(1) : UIntPtr.Zero;
+        if (input)
+        {
+            return new UIntPtr(1);
+        }
+
+        return UIntPtr.Zero;
     }
 }
 
+/// <summary>
+/// 将 bool 类型转换为 string 类型
+/// </summary>
 [CommonConverter]
 public class BoolToStringConverter : IConverter<bool, string>
 {

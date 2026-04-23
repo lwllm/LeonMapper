@@ -2,6 +2,9 @@
 
 namespace LeonMapper.Convert.Converters;
 
+/// <summary>
+/// 将 long 类型转换为 sbyte 类型
+/// </summary>
 public class LongToSByteConverter : IConverter<long, sbyte>
 {
     public sbyte Convert(long input)
@@ -14,6 +17,9 @@ public class LongToSByteConverter : IConverter<long, sbyte>
     }
 }
 
+/// <summary>
+/// 将 long 类型转换为 byte 类型
+/// </summary>
 public class LongToByteConverter : IConverter<long, byte>
 {
     public byte Convert(long input)
@@ -26,6 +32,9 @@ public class LongToByteConverter : IConverter<long, byte>
     }
 }
 
+/// <summary>
+/// 将 long 类型转换为 short 类型
+/// </summary>
 [CommonConverter]
 public class LongToShortConverter : IConverter<long, short>
 {
@@ -39,6 +48,9 @@ public class LongToShortConverter : IConverter<long, short>
     }
 }
 
+/// <summary>
+/// 将 long 类型转换为 ushort 类型
+/// </summary>
 public class LongToUShortConverter : IConverter<long, ushort>
 {
     public ushort Convert(long input)
@@ -51,6 +63,9 @@ public class LongToUShortConverter : IConverter<long, ushort>
     }
 }
 
+/// <summary>
+/// 将 long 类型转换为 int 类型
+/// </summary>
 [CommonConverter]
 public class LongToIntConverter : IConverter<long, int>
 {
@@ -64,6 +79,9 @@ public class LongToIntConverter : IConverter<long, int>
     }
 }
 
+/// <summary>
+/// 将 long 类型转换为 uint 类型
+/// </summary>
 public class LongToUIntConverter : IConverter<long, uint>
 {
     public uint Convert(long input)
@@ -76,6 +94,9 @@ public class LongToUIntConverter : IConverter<long, uint>
     }
 }
 
+/// <summary>
+/// 将 long 类型转换为 ulong 类型
+/// </summary>
 public class LongToULongConverter : IConverter<long, ulong>
 {
     public ulong Convert(long input)
@@ -88,27 +109,32 @@ public class LongToULongConverter : IConverter<long, ulong>
     }
 }
 
+/// <summary>
+/// 将 long 类型转换为 float 类型
+/// </summary>
 public class LongToFloatConverter : IConverter<long, float>
 {
     public float Convert(long input)
     {
-        if (input < float.MinValue || input > float.MaxValue)
-            throw new OverflowException();
         return input;
     }
 }
 
+/// <summary>
+/// 将 long 类型转换为 double 类型
+/// </summary>
 [CommonConverter]
 public class LongToDoubleConverter : IConverter<long, double>
 {
     public double Convert(long input)
     {
-        if (input < double.MinValue || input > double.MaxValue)
-            throw new OverflowException();
         return input;
     }
 }
 
+/// <summary>
+/// 将 long 类型转换为 decimal 类型
+/// </summary>
 [CommonConverter]
 public class LongToDecimalConverter : IConverter<long, decimal>
 {
@@ -118,16 +144,24 @@ public class LongToDecimalConverter : IConverter<long, decimal>
     }
 }
 
+/// <summary>
+/// 将 long 类型转换为 char 类型
+/// </summary>
 public class LongToCharConverter : IConverter<long, char>
 {
     public char Convert(long input)
     {
         if (input < char.MinValue || input > char.MaxValue)
+        {
             throw new OverflowException();
+        }
         return (char)input;
     }
 }
 
+/// <summary>
+/// 将 long 类型转换为 bool 类型
+/// </summary>
 public class LongToBoolConverter : IConverter<long, bool>
 {
     public bool Convert(long input)
@@ -136,6 +170,9 @@ public class LongToBoolConverter : IConverter<long, bool>
     }
 }
 
+/// <summary>
+/// 将 long 类型转换为 IntPtr 类型
+/// </summary>
 public class LongToIntPtrConverter : IConverter<long, IntPtr>
 {
     public IntPtr Convert(long input)
@@ -143,7 +180,9 @@ public class LongToIntPtrConverter : IConverter<long, IntPtr>
         if (IntPtr.Size == 4)
         {
             if (input < int.MinValue || input > int.MaxValue)
+            {
                 throw new OverflowException();
+            }
             return new IntPtr((int)input);
         }
         else
@@ -153,6 +192,9 @@ public class LongToIntPtrConverter : IConverter<long, IntPtr>
     }
 }
 
+/// <summary>
+/// 将 long 类型转换为 UIntPtr 类型
+/// </summary>
 public class LongToUIntPtrConverter : IConverter<long, UIntPtr>
 {
     public UIntPtr Convert(long input)
@@ -160,7 +202,9 @@ public class LongToUIntPtrConverter : IConverter<long, UIntPtr>
         if (UIntPtr.Size == 4)
         {
             if (input < uint.MinValue || input > uint.MaxValue)
+            {
                 throw new OverflowException();
+            }
             return new UIntPtr((uint)input);
         }
         else
@@ -170,6 +214,9 @@ public class LongToUIntPtrConverter : IConverter<long, UIntPtr>
     }
 }
 
+/// <summary>
+/// 将 long 类型转换为 string 类型
+/// </summary>
 [CommonConverter]
 public class LongToStringConverter : IConverter<long, string>
 {

@@ -26,6 +26,9 @@ public class TypeMappingPlan
     /// <summary>未映射的目标成员</summary>
     public IReadOnlyList<MemberInfo> UnmappedTargetMembers { get; }
 
+    /// <summary>
+    /// 构造类型映射计划
+    /// </summary>
     public TypeMappingPlan(
         Type sourceType,
         Type targetType,
@@ -47,28 +50,41 @@ public class TypeMappingPlan
     /// </summary>
     public IEnumerable<MemberMapping> AllMappings => PropertyMappings.Concat(FieldMappings);
 
+    /// <summary>
+    /// 输出映射计划的可读描述
+    /// </summary>
     public override string ToString()
     {
         var sb = new StringBuilder();
         sb.AppendLine($"Mapping Plan: {SourceType.Name} -> {TargetType.Name}");
         sb.AppendLine("  Properties:");
         foreach (var mapping in PropertyMappings)
+        {
             sb.AppendLine($"    {mapping}");
+        }
+
         sb.AppendLine("  Fields:");
         foreach (var mapping in FieldMappings)
+        {
             sb.AppendLine($"    {mapping}");
+        }
+
         if (UnmappedSourceMembers.Count > 0)
         {
             sb.AppendLine("  Unmapped Source:");
             foreach (var m in UnmappedSourceMembers)
+            {
                 sb.AppendLine($"    {m.Name}");
+            }
         }
 
         if (UnmappedTargetMembers.Count > 0)
         {
             sb.AppendLine("  Unmapped Target:");
             foreach (var m in UnmappedTargetMembers)
+            {
                 sb.AppendLine($"    {m.Name}");
+            }
         }
 
         return sb.ToString();

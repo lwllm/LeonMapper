@@ -12,5 +12,8 @@ public enum MappingStrategy
     Convert,
 
     /// <summary>复杂类型递归映射</summary>
-    Complex
+    Complex,
+
+    /// <summary>集合类型映射（List、Array、IEnumerable 等）</summary>
+    Collection
 }

@@ -2,6 +2,9 @@
 
 namespace LeonMapper.Convert.Converters;
 
+/// <summary>
+/// 将 ulong 类型转换为 sbyte 类型
+/// </summary>
 public class ULongToSByteConverter : IConverter<ulong, sbyte>
 {
     public sbyte Convert(ulong input)
@@ -14,6 +17,9 @@ public class ULongToSByteConverter : IConverter<ulong, sbyte>
     }
 }
 
+/// <summary>
+/// 将 ulong 类型转换为 byte 类型
+/// </summary>
 public class ULongToByteConverter : IConverter<ulong, byte>
 {
     public byte Convert(ulong input)
@@ -26,6 +32,9 @@ public class ULongToByteConverter : IConverter<ulong, byte>
     }
 }
 
+/// <summary>
+/// 将 ulong 类型转换为 short 类型
+/// </summary>
 public class ULongToShortConverter : IConverter<ulong, short>
 {
     public short Convert(ulong input)
@@ -38,6 +47,9 @@ public class ULongToShortConverter : IConverter<ulong, short>
     }
 }
 
+/// <summary>
+/// 将 ulong 类型转换为 ushort 类型
+/// </summary>
 public class ULongToUShortConverter : IConverter<ulong, ushort>
 {
     public ushort Convert(ulong input)
@@ -50,6 +62,9 @@ public class ULongToUShortConverter : IConverter<ulong, ushort>
     }
 }
 
+/// <summary>
+/// 将 ulong 类型转换为 int 类型
+/// </summary>
 public class ULongToIntConverter : IConverter<ulong, int>
 {
     public int Convert(ulong input)
@@ -62,6 +77,9 @@ public class ULongToIntConverter : IConverter<ulong, int>
     }
 }
 
+/// <summary>
+/// 将 ulong 类型转换为 uint 类型
+/// </summary>
 public class ULongToUIntConverter : IConverter<ulong, uint>
 {
     public uint Convert(ulong input)
@@ -74,6 +92,9 @@ public class ULongToUIntConverter : IConverter<ulong, uint>
     }
 }
 
+/// <summary>
+/// 将 ulong 类型转换为 long 类型
+/// </summary>
 public class ULongToLongConverter : IConverter<ulong, long>
 {
     public long Convert(ulong input)
@@ -86,28 +107,41 @@ public class ULongToLongConverter : IConverter<ulong, long>
     }
 }
 
+/// <summary>
+/// 将 ulong 类型转换为 float 类型
+/// </summary>
 public class ULongToFloatConverter : IConverter<ulong, float>
 {
     public float Convert(ulong input)
     {
         if (input > float.MaxValue)
+        {
             throw new OverflowException();
+        }
 
         return input;
     }
 }
 
+/// <summary>
+/// 将 ulong 类型转换为 double 类型
+/// </summary>
 public class ULongToDoubleConverter : IConverter<ulong, double>
 {
     public double Convert(ulong input)
     {
         if (input > double.MaxValue)
+        {
             throw new OverflowException();
+        }
 
         return input;
     }
 }
 
+/// <summary>
+/// 将 ulong 类型转换为 decimal 类型
+/// </summary>
 public class ULongToDecimalConverter : IConverter<ulong, decimal>
 {
     public decimal Convert(ulong input)
@@ -116,17 +150,25 @@ public class ULongToDecimalConverter : IConverter<ulong, decimal>
     }
 }
 
+/// <summary>
+/// 将 ulong 类型转换为 char 类型
+/// </summary>
 public class ULongToCharConverter : IConverter<ulong, char>
 {
     public char Convert(ulong input)
     {
         if (input > char.MaxValue)
+        {
             throw new OverflowException();
+        }
 
         return (char)input;
     }
 }
 
+/// <summary>
+/// 将 ulong 类型转换为 bool 类型
+/// </summary>
 public class ULongToBoolConverter : IConverter<ulong, bool>
 {
     public bool Convert(ulong input)
@@ -135,28 +177,41 @@ public class ULongToBoolConverter : IConverter<ulong, bool>
     }
 }
 
+/// <summary>
+/// 将 ulong 类型转换为 IntPtr 类型
+/// </summary>
 public class ULongToIntPtrConverter : IConverter<ulong, IntPtr>
 {
     public IntPtr Convert(ulong input)
     {
         if (input > (ulong)IntPtr.MaxValue)
+        {
             throw new OverflowException();
+        }
 
         return (IntPtr)input;
     }
 }
 
+/// <summary>
+/// 将 ulong 类型转换为 UIntPtr 类型
+/// </summary>
 public class ULongToUIntPtrConverter : IConverter<ulong, UIntPtr>
 {
     public UIntPtr Convert(ulong input)
     {
         if (input > (ulong)UIntPtr.MaxValue)
+        {
             throw new OverflowException();
+        }
 
         return (UIntPtr)input;
     }
 }
 
+/// <summary>
+/// 将 ulong 类型转换为 string 类型
+/// </summary>
 [CommonConverter]
 public class ULongToStringConverter : IConverter<ulong, string>
 {
