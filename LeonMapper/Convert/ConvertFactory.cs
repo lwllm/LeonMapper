@@ -32,6 +32,7 @@ public class ConvertFactory
         }
 
         var converters = types.Where(t =>
+            !t.IsAbstract && !t.ContainsGenericParameters &&
             t.GetInterfaces().Any(i =>
                 i.IsGenericType && i.GetGenericTypeDefinition() == converterInterfaceType));
 

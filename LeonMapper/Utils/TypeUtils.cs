@@ -33,7 +33,7 @@ internal static class TypeUtils
     public static bool IsBaseType(Type type)
     {
         ArgumentNullException.ThrowIfNull(type);
-        return type.IsPrimitive || type == typeof(string) || type == typeof(decimal);
+        return type.IsPrimitive || type == typeof(string) || type == typeof(decimal) || type.IsEnum;
     }
 
     /// <summary>

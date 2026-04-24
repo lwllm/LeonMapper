@@ -238,6 +238,26 @@ public static class MappingPlanBuilder
             return new MemberMapping(sourceMember, targetMember, MappingStrategy.Direct);
         }
 
+        // 两个都是 Enum 类型，按名称映射
+        if (sourceUnderlyingType.IsEnum && targetUnderlyingType.IsEnum)
+        {
+            return new MemberMapping(sourceMember, targetMember, MappingStrategy.Convert,
+                converter: CreateEnumConverter(sourceUnderlyingType, targetUnderlyingType));
+        }
+
+        // Enum 与基础类型之间的转换
+        if (sourceUnderlyingType.IsEnum && TypeUtils.IsBaseType(targetUnderlyingType))
+        {
+            return new MemberMapping(sourceMember, targetMember, MappingStrategy.Convert,
+                converter: CreateEnumToBaseTypeConverter(sourceUnderlyingType, targetUnderlyingType));
+        }
+
+        if (TypeUtils.IsBaseType(sourceUnderlyingType) && targetUnderlyingType.IsEnum)
+        {
+            return new MemberMapping(sourceMember, targetMember, MappingStrategy.Convert,
+                converter: CreateBaseTypeToEnumConverter(sourceUnderlyingType, targetUnderlyingType));
+        }
+
         // 两个都是基础类型（或可空基础类型），尝试类型转换
         if (TypeUtils.IsBaseType(sourceUnderlyingType) && TypeUtils.IsBaseType(targetUnderlyingType))
         {
@@ -284,6 +304,39 @@ public static class MappingPlanBuilder
 
         // 一个基础类型一个复杂类型，不映射
         return null;
+    }
+
+    /// <summary>
+    /// 创建 Enum 到 Enum 的转换器（按名称映射）
+    /// </summary>
+    private static object CreateEnumConverter(Type sourceEnumType, Type targetEnumType)
+    {
+        var converterType = typeof(Convert.Converters.EnumConverter<,>).MakeGenericType(sourceEnumType, targetEnumType);
+        return Activator.CreateInstance(converterType)!;
+    }
+
+    /// <summary>
+    /// 创建 Enum 到基础类型的转换器
+    /// </summary>
+    private static object CreateEnumToBaseTypeConverter(Type enumType, Type targetType)
+    {
+        var converterType = typeof(Convert.Converters.EnumToBaseTypeConverter<,>).MakeGenericType(enumType, targetType);
+        return Activator.CreateInstance(converterType)!;
+    }
+
+    /// <summary>
+    /// 创建基础类型到 Enum 的转换器
+    /// </summary>
+    private static object CreateBaseTypeToEnumConverter(Type sourceType, Type enumType)
+    {
+        if (sourceType == typeof(string))
+        {
+            var converterType = typeof(Convert.Converters.StringToEnumConverter<>).MakeGenericType(enumType);
+            return Activator.CreateInstance(converterType)!;
+        }
+
+        var converterType2 = typeof(Convert.Converters.BaseTypeToEnumConverter<,>).MakeGenericType(sourceType, enumType);
+        return Activator.CreateInstance(converterType2)!;
     }
 
     /// <summary>
