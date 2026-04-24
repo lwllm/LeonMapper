@@ -168,8 +168,8 @@ using LeonMapper.Config;
 // 设置默认引擎（默认 Expression）
 MapperConfig.SetDefaultProcessType(ProcessTypeEnum.Emit);
 
-// 设置转换器范围（默认 CommonConverters）
-MapperConfig.SetConverterScope(ConverterScopeEnum.AllConverters);
+// 设置转换器范围（默认 Common）
+MapperConfig.SetConverterScope(ConverterScope.All);
 
 // 设置是否自动转换不同类型（默认 true）
 MapperConfig.SetAutoConvert(false);
@@ -180,24 +180,24 @@ MapperConfig.SetAutoConvert(false);
 | 引擎 | 说明 | 状态 |
 |------|------|------|
 | `ProcessTypeEnum.Expression` | 表达式树编译，功能完整 | 已完成（默认） |
-| `ProcessTypeEnum.Emit` | IL 动态生成 | 开发中 |
+| `ProcessTypeEnum.Emit` | IL 动态生成，功能完整 | 已完成 |
 
 也可以在每次调用时指定引擎：
 
 ```csharp
+// 使用默认引擎（全局配置）
 var mapper = new Mapper<User, UserDto>();
-
-// 使用默认引擎
-mapper.MapTo(user);
+var result = mapper.MapTo(user);
 
 // 指定使用 Emit 引擎
-mapper.MapTo(user, ProcessTypeEnum.Emit);
+var emitMapper = new Mapper<User, UserDto>(ProcessTypeEnum.Emit);
+var result2 = emitMapper.MapTo(user);
 ```
 
 ### 转换器范围
 
-- `CommonConverters` — 仅使用常用转换器（安全的类型转换，如 widening 转换）
-- `AllConverters` — 使用所有可用的转换器（包括可能有精度损失或溢出的转换）
+- `ConverterScope.Common` — 仅使用标记为 `[CommonConverter]` 的常用转换器
+- `ConverterScope.All` — 使用所有可用的转换器（包括可能有精度损失或溢出的转换）
 
 ## 运行测试
 
