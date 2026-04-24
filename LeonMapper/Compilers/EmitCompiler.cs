@@ -534,11 +534,11 @@ internal static class DelegateInvoker
     /// <summary>
     /// 通过 ID 调用缓存的转换器委托（支持可空类型）
     /// </summary>
-    public static TOut InvokeConverter<TIn, TOut>(int funcId, TIn value)
+    public static TOutput InvokeConverter<TInput, TOutput>(int funcId, TInput value)
     {
         if (_converters.TryGetValue(funcId, out var del))
         {
-            var func = (Func<TIn, TOut>)del;
+            var func = (Func<TInput, TOutput>)del;
             return func(value);
         }
 
@@ -569,14 +569,14 @@ internal static class DelegateInvoker
     /// <summary>
     /// 通过缓存的 Mapper 实例执行复杂类型映射
     /// </summary>
-    public static TOut? MapComplex<TIn, TOut>(TIn? source) where TOut : class
+    public static TDestination? MapComplex<TSource, TDestination>(TSource? source) where TDestination : class
     {
         if (source == null)
         {
             return default;
         }
 
-        var mapper = (Mapper<TIn, TOut>)CachedMapperFactory.GetOrCreateMapper(typeof(TIn), typeof(TOut));
+        var mapper = (Mapper<TSource, TDestination>)CachedMapperFactory.GetOrCreateMapper(typeof(TSource), typeof(TDestination));
         return mapper.MapTo(source);
     }
 

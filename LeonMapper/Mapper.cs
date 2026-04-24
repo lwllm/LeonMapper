@@ -7,20 +7,20 @@ using LeonMapper.Validation;
 namespace LeonMapper;
 
 /// <summary>
-/// 对象映射器：将 TIn 映射为 TOut
+/// 对象映射器：将 TSource 映射为 TDestination
 /// </summary>
-/// <typeparam name="TIn">源类型</typeparam>
-/// <typeparam name="TOut">目标类型（必须为 class）</typeparam>
-public class Mapper<TIn, TOut> where TOut : class
+/// <typeparam name="TSource">源类型</typeparam>
+/// <typeparam name="TDestination">目标类型（必须为 class）</typeparam>
+public class Mapper<TSource, TDestination> where TDestination : class
 {
-    private readonly ICompiler<TIn, TOut?> _compiler;
+    private readonly ICompiler<TSource, TDestination?> _compiler;
 
     /// <summary>
     /// 默认构造函数：自动构建映射计划并使用全局配置的编译策略
     /// </summary>
     public Mapper()
     {
-        var plan = MappingPlanBuilder.Build<TIn, TOut>();
+        var plan = MappingPlanBuilder.Build<TSource, TDestination>();
         _compiler = CreateCompiler(plan);
     }
 
@@ -37,14 +37,14 @@ public class Mapper<TIn, TOut> where TOut : class
     /// </summary>
     public Mapper(ProcessTypeEnum processType)
     {
-        var plan = MappingPlanBuilder.Build<TIn, TOut>();
+        var plan = MappingPlanBuilder.Build<TSource, TDestination>();
         _compiler = CreateCompiler(plan, processType);
     }
 
     /// <summary>
     /// 执行映射
     /// </summary>
-    public TOut? MapTo(TIn source)
+    public TDestination? MapTo(TSource source)
     {
         return _compiler.Map(source);
     }
@@ -54,7 +54,7 @@ public class Mapper<TIn, TOut> where TOut : class
     /// </summary>
     public static TypeMappingPlan GetPlan()
     {
-        return MappingPlanBuilder.Build<TIn, TOut>();
+        return MappingPlanBuilder.Build<TSource, TDestination>();
     }
 
     /// <summary>
@@ -66,11 +66,11 @@ public class Mapper<TIn, TOut> where TOut : class
         return MappingValidator.Validate(plan);
     }
 
-    private static ICompiler<TIn, TOut?> CreateCompiler(TypeMappingPlan plan, ProcessTypeEnum? processType = null)
+    private static ICompiler<TSource, TDestination?> CreateCompiler(TypeMappingPlan plan, ProcessTypeEnum? processType = null)
     {
         var compilerType = processType ?? MapperConfig.GetDefaultProcessType();
         return compilerType == ProcessTypeEnum.Emit
-            ? new EmitCompiler<TIn, TOut>(plan)
-            : new ExpressionCompiler<TIn, TOut>(plan);
+            ? new EmitCompiler<TSource, TDestination>(plan)
+            : new ExpressionCompiler<TSource, TDestination>(plan);
     }
 }
