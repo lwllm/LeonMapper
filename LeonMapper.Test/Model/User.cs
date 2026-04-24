@@ -11,16 +11,16 @@ namespace LeonMapper.Test.Model
         public int Id { get; set; }
         
         [MapTo(nameof(UserNew.Name))] 
-        public string StudentNumber { get; set; }
-        public string Name { get; set; }
+        public string StudentNumber { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
 
-        [IgnoreMap] public string Address { get; set; }
-        public Role Role { get; set; }
+        [IgnoreMap] public string Address { get; set; } = string.Empty;
+        public Role Role { get; set; } = null!;
 
-        public string test1;
+        public string test1 = string.Empty;
         public int test2;
 
-        public Role role2;
+        public Role role2 = null!;
 
         public override string ToString()
         {
@@ -37,14 +37,14 @@ namespace LeonMapper.Test.Model
 
         public int Id { get; set; }
         public int StudentNumber { get; set; }
-        [IgnoreMapTo] public string Name { get; set; }
-        public string Address { get; set; }
-        public RoleNew Role { get; set; }
+        [IgnoreMapTo] public string Name { get; set; } = string.Empty;
+        public string Address { get; set; } = string.Empty;
+        public RoleNew Role { get; set; } = null!;
 
-        public string test1;
-        public string test2;
+        public string test1 = string.Empty;
+        public string test2 = string.Empty;
 
-        public RoleNew role2;
+        public RoleNew role2 = null!;
 
         public override string ToString()
         {

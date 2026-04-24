@@ -65,12 +65,12 @@ namespace LeonMapper.Test
                 role2 = role2
             };
 
-            var userMapper = new Mapper<User, UserNew?>();
+            var userMapper = new Mapper<User, UserNew>();
             // var roleMapper = new Mapper<Role, RoleNew>();
             var newUser = userMapper.MapTo(user);
             // var newUser2 = userMapper.MapTo(user, ProcessTypeEnum.Emit);
             // var newRole = roleMapper.MapTo(role);
-            System.Console.WriteLine(newUser.ToString());
+            System.Console.WriteLine(newUser?.ToString());
             // System.Console.WriteLine(newUser2.ToString());
             // System.Console.WriteLine(newRole.ToString());
 
@@ -131,8 +131,8 @@ namespace LeonMapper.Test
 
             //LeonMapper
             sw.Restart();
-            var userMapper = new Mapper<User, UserNew?>();
-            var roleMapper = new Mapper<Role, RoleNew?>();
+            var userMapper = new Mapper<User, UserNew>();
+            var roleMapper = new Mapper<Role, RoleNew>();
             for (int i = 0; i < testCount; i++)
             {
                 var newUser = userMapper.MapTo(user);

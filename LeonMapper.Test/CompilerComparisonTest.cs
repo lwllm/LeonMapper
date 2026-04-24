@@ -99,6 +99,7 @@ public class CompilerComparisonTest
         var mapper = new Mapper<Role, RoleNew>(ProcessTypeEnum.Expression);
         var result = mapper.MapTo(_role);
 
+        Assert.IsNotNull(result);
         Assert.AreEqual("ttt1", result.test1);
         Assert.AreEqual("ttt2", result.test2);
     }
@@ -109,6 +110,7 @@ public class CompilerComparisonTest
         var mapper = new Mapper<Role, RoleNew>(ProcessTypeEnum.Emit);
         var result = mapper.MapTo(_role);
 
+        Assert.IsNotNull(result);
         Assert.AreEqual("ttt1", result.test1);
         Assert.AreEqual("ttt2", result.test2);
     }
@@ -119,6 +121,7 @@ public class CompilerComparisonTest
         var mapper = new Mapper<User, UserNew>(ProcessTypeEnum.Expression);
         var result = mapper.MapTo(_user);
 
+        Assert.IsNotNull(result);
         // test2 是 int → string 转换
         Assert.AreEqual("2222", result.test2);
     }
@@ -129,6 +132,7 @@ public class CompilerComparisonTest
         var mapper = new Mapper<User, UserNew>(ProcessTypeEnum.Emit);
         var result = mapper.MapTo(_user);
 
+        Assert.IsNotNull(result);
         // test2 是 int → string 转换
         Assert.AreEqual("2222", result.test2);
     }
