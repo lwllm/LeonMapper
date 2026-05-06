@@ -277,6 +277,18 @@ public static class MappingPlanBuilder
         // 两个都是复杂类型（或可空复杂类型），递归构建嵌套映射计划
         if (!TypeUtils.IsBaseType(sourceUnderlyingType) && !TypeUtils.IsBaseType(targetUnderlyingType))
         {
+            // 检查是否为 Dictionary 类型（优先级高于 Collection，因为 Dictionary 也实现了 IEnumerable）
+            var sourceDictTypes = TypeUtils.GetDictionaryKeyValueTypes(sourceType);
+            var targetDictTypes = TypeUtils.GetDictionaryKeyValueTypes(targetType);
+
+            if (sourceDictTypes != null && targetDictTypes != null)
+            {
+                return CreateDictionaryMapping(sourceMember, targetMember,
+                    sourceDictTypes.Value.KeyType, sourceDictTypes.Value.ValueType,
+                    targetDictTypes.Value.KeyType, targetDictTypes.Value.ValueType,
+                    options);
+            }
+
             // 检查是否为集合类型
             var sourceElementType = TypeUtils.GetCollectionElementType(sourceType);
             var targetElementType = TypeUtils.GetCollectionElementType(targetType);
@@ -337,6 +349,70 @@ public static class MappingPlanBuilder
 
         var converterType2 = typeof(Convert.Converters.BaseTypeToEnumConverter<,>).MakeGenericType(sourceType, enumType);
         return Activator.CreateInstance(converterType2)!;
+    }
+
+    /// <summary>
+    /// 创建 Dictionary 类型的映射规则
+    /// </summary>
+    private static MemberMapping? CreateDictionaryMapping(MemberInfo sourceMember, MemberInfo targetMember,
+        Type sourceKeyType, Type sourceValueType,
+        Type targetKeyType, Type targetValueType,
+        PlanBuildOptions options)
+    {
+        object? keyConverter = null;
+        object? valueConverter = null;
+        TypeMappingPlan? valueNestedPlan = null;
+
+        // 处理 Key 类型 — Key 类型必须精确匹配或可转换，不依赖 AutoConvert
+        if (sourceKeyType != targetKeyType)
+        {
+            var sourceKeyUnderlying = TypeUtils.GetUnderlyingType(sourceKeyType);
+            var targetKeyUnderlying = TypeUtils.GetUnderlyingType(targetKeyType);
+
+            if (TypeUtils.IsBaseType(sourceKeyUnderlying) && TypeUtils.IsBaseType(targetKeyUnderlying))
+            {
+                keyConverter = ConvertFactory.GetConverter(sourceKeyUnderlying, targetKeyUnderlying, options.ConverterScope);
+                if (keyConverter == null)
+                {
+                    return null; // Key 类型不同且无转换器，无法映射
+                }
+            }
+            else
+            {
+                return null; // 不支持的 Key 类型转换
+            }
+        }
+
+        // 处理 Value 类型
+        if (sourceValueType != targetValueType)
+        {
+            var sourceValueUnderlying = TypeUtils.GetUnderlyingType(sourceValueType);
+            var targetValueUnderlying = TypeUtils.GetUnderlyingType(targetValueType);
+
+            if (TypeUtils.IsBaseType(sourceValueUnderlying) && TypeUtils.IsBaseType(targetValueUnderlying))
+            {
+                if (options.AutoConvert)
+                {
+                    valueConverter = ConvertFactory.GetConverter(sourceValueUnderlying, targetValueUnderlying, options.ConverterScope);
+                    if (valueConverter == null)
+                    {
+                        return null;
+                    }
+                }
+            }
+            else
+            {
+                // 复杂 Value 类型，递归构建嵌套映射
+                if (options.BuildNestedPlans)
+                {
+                    valueNestedPlan = Build(sourceValueUnderlying, targetValueUnderlying, options);
+                }
+            }
+        }
+
+        return new MemberMapping(sourceMember, targetMember, MappingStrategy.Dictionary,
+            sourceKeyType, sourceValueType, targetKeyType, targetValueType,
+            keyConverter, valueConverter, valueNestedPlan);
     }
 
     /// <summary>

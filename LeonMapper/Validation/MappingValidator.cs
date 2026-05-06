@@ -81,6 +81,10 @@ public static class MappingValidator
             case MappingStrategy.Collection:
                 ValidateCollectionMapping(mapping, errors, warnings);
                 break;
+
+            case MappingStrategy.Dictionary:
+                ValidateDictionaryMapping(mapping, errors, warnings);
+                break;
         }
     }
 
@@ -133,6 +137,49 @@ public static class MappingValidator
             // 一个基础类型一个复杂类型，无法映射
             errors.Add(
                 $"{mapping.SourceMember.Name} -> {mapping.TargetMember.Name}: 集合元素类型不兼容（{sourceElementType.Name} vs {targetElementType.Name}）");
+        }
+    }
+
+    /// <summary>
+    /// 验证 Dictionary 类型映射规则的正确性
+    /// </summary>
+    private static void ValidateDictionaryMapping(MemberMapping mapping, List<string> errors, List<string> warnings)
+    {
+        if (mapping.DictionarySourceKeyType == null || mapping.DictionarySourceValueType == null ||
+            mapping.DictionaryTargetKeyType == null || mapping.DictionaryTargetValueType == null)
+        {
+            errors.Add($"{mapping.SourceMember.Name} -> {mapping.TargetMember.Name}: Dictionary 映射缺少 Key/Value 类型信息");
+            return;
+        }
+
+        // 验证 Key 映射
+        if (mapping.DictionarySourceKeyType != mapping.DictionaryTargetKeyType && mapping.DictionaryKeyConverter == null)
+        {
+            // Key 类型不同且无转换器
+            if (!TypeUtils.IsBaseType(mapping.DictionarySourceKeyType) || !TypeUtils.IsBaseType(mapping.DictionaryTargetKeyType))
+            {
+                errors.Add($"{mapping.SourceMember.Name} -> {mapping.TargetMember.Name}: Dictionary Key 类型不兼容（{mapping.DictionarySourceKeyType.Name} -> {mapping.DictionaryTargetKeyType.Name}）");
+            }
+        }
+
+        // 验证 Value 映射
+        if (mapping.DictionarySourceValueType != mapping.DictionaryTargetValueType)
+        {
+            var isValueBaseTypes = TypeUtils.IsBaseType(mapping.DictionarySourceValueType) && TypeUtils.IsBaseType(mapping.DictionaryTargetValueType);
+            var isValueComplexTypes = !TypeUtils.IsBaseType(mapping.DictionarySourceValueType) && !TypeUtils.IsBaseType(mapping.DictionaryTargetValueType);
+
+            if (isValueBaseTypes && mapping.DictionaryValueConverter == null)
+            {
+                warnings.Add($"{mapping.SourceMember.Name} -> {mapping.TargetMember.Name}: Dictionary Value 基础类型转换缺少转换器");
+            }
+            else if (isValueComplexTypes && mapping.DictionaryValueNestedPlan == null)
+            {
+                warnings.Add($"{mapping.SourceMember.Name} -> {mapping.TargetMember.Name}: Dictionary Value 复杂类型映射未构建嵌套计划");
+            }
+            else if (!isValueBaseTypes && !isValueComplexTypes)
+            {
+                errors.Add($"{mapping.SourceMember.Name} -> {mapping.TargetMember.Name}: Dictionary Value 类型不兼容（{mapping.DictionarySourceValueType.Name} -> {mapping.DictionaryTargetValueType.Name}）");
+            }
         }
     }
 

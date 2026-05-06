@@ -39,12 +39,12 @@ Phase 3
 - **Status:** pending
 
 ### Phase 5: 核心功能增强（按优先级选择）
+- [x] 实现 Dictionary 映射支持
 - [ ] 实现 Fluent API 配置（类似 AutoMapper 的 CreateMap）
 - [ ] 实现 ForMember 自定义映射
 - [ ] ~~实现循环引用处理（PreserveReferences）~~ 【延后】
-- [ ] 实现 Enum 类型映射支持
-- [ ] 实现 Dictionary 映射支持
-- **Status:** pending
+- [x] 实现 Enum 类型映射支持
+- **Status:** in_progress
 
 ### Phase 6: 性能与工程化
 - [ ] 引入 BenchmarkDotNet 专业基准测试

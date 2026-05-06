@@ -87,9 +87,26 @@
   - README.md (modified)
 
 ### Phase 5: 核心功能增强（按优先级选择）
-- **Status:** pending
+- **Status:** in_progress
+- **Started:** 2026-05-06
 - Actions taken:
-  -
+  - 已完成 Enum 映射支持和 Dictionary 映射支持
+  - Dictionary 映射实现：
+    - TypeUtils：新增 GetDictionaryKeyValueTypes() 和 IsDictionaryType()
+    - MappingStrategy：新增 Dictionary 枚举值
+    - MemberMapping：新增 Dictionary Key/Value 类型相关字段
+    - MappingPlanBuilder：在 CreateMemberMapping 中识别 Dictionary 类型
+    - ExpressionCompiler：使用 ToDictionary(keySelector, elementSelector) 实现
+    - EmitCompiler：通过 DictionaryMapperCache 表达式缓存实现高性能 Dictionary 映射
+    - 新增 14 个测试：基础映射、复杂 Value 映射、Key 类型转换、null/空字典、双编译器一致性、GetPlan/Validate
+  - 修复 TypeUtils.IsCollectionType 不排除 Dictionary 的问题
+  - Code Review 修复：
+    - M1: DictionaryMapperCache 硬编码 ConverterScope.All → MapperConfig.GetDefaultConverterScope()
+    - M2: MapDictionary 支持 IDictionary/IReadOnlyDictionary 等非 Dictionary 目标类型
+    - N1: CreateDictionaryMapping Key 转换逻辑去掉多余的 AutoConvert 判断
+    - N3: 补充 7 个测试（IDictionary/IReadOnlyDictionary/字段映射/不兼容类型验证）
+- Files created/modified:
+  - DictionaryMappingTest.cs
 - Files created/modified:
   -
 

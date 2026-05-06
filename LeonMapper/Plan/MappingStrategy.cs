@@ -15,5 +15,8 @@ public enum MappingStrategy
     Complex,
 
     /// <summary>集合类型映射（List、Array、IEnumerable 等）</summary>
-    Collection
+    Collection,
+
+    /// <summary>Dictionary 类型映射（Dictionary&lt;K,V&gt; 等）</summary>
+    Dictionary
 }

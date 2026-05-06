@@ -96,7 +96,7 @@ internal static class TypeUtils
     }
 
     /// <summary>
-    /// 判断类型是否为集合类型（数组或 IEnumerable&lt;T&gt; 派生类型）
+    /// 判断类型是否为集合类型（数组或 IEnumerable&lt;T&gt; 派生类型，但不包括 Dictionary）
     /// </summary>
     /// <param name="type">要判断的类型，不能为 null</param>
     /// <returns>如果类型是支持的集合类型，返回 true；否则返回 false</returns>
@@ -107,13 +107,72 @@ internal static class TypeUtils
     /// TypeUtils.IsCollectionType(typeof(List&lt;int&gt;));     // true
     /// TypeUtils.IsCollectionType(typeof(int[]));           // true
     /// TypeUtils.IsCollectionType(typeof(string));        // false
-    /// TypeUtils.IsCollectionType(typeof(Dictionary&lt;int, string&gt;)); // true
+    /// TypeUtils.IsCollectionType(typeof(Dictionary&lt;int, string&gt;)); // false
     /// </code>
     /// </example>
     public static bool IsCollectionType(Type type)
     {
         ArgumentNullException.ThrowIfNull(type);
-        return GetCollectionElementType(type) != null;
+        return !IsDictionaryType(type) && GetCollectionElementType(type) != null;
+    }
+
+    /// <summary>
+    /// 判断类型是否为 Dictionary&lt;K,V&gt; 类型
+    /// </summary>
+    /// <param name="type">要判断的类型，不能为 null</param>
+    /// <returns>如果类型是 Dictionary&lt;K,V&gt; 或实现 IDictionary&lt;K,V&gt; 的类型，返回 true；否则返回 false</returns>
+    /// <exception cref="ArgumentNullException">当 type 为 null 时抛出</exception>
+    public static bool IsDictionaryType(Type type)
+    {
+        ArgumentNullException.ThrowIfNull(type);
+        return GetDictionaryKeyValueTypes(type) != null;
+    }
+
+    /// <summary>
+    /// 获取 Dictionary 类型的 Key 和 Value 类型
+    /// </summary>
+    /// <param name="type">要分析的 Dictionary 类型，不能为 null</param>
+    /// <returns>如果类型是 Dictionary&lt;K,V&gt; 或实现 IDictionary&lt;K,V&gt;，返回 (KeyType, ValueType)；否则返回 null</returns>
+    /// <exception cref="ArgumentNullException">当 type 为 null 时抛出</exception>
+    /// <remarks>
+    /// 支持的类型包括：
+    /// <list type="bullet">
+    /// <item>Dictionary&lt;K,V&gt;</li>
+    /// <item>IDictionary&lt;K,V&gt;</li>
+    /// <item>实现 IDictionary&lt;K,V&gt; 的自定义类型</li>
+    /// </list>
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// var types = TypeUtils.GetDictionaryKeyValueTypes(typeof(Dictionary&lt;int, string&gt;));
+    /// // types.Value == (typeof(int), typeof(string))
+    /// </code>
+    /// </example>
+    public static (Type KeyType, Type ValueType)? GetDictionaryKeyValueTypes(Type type)
+    {
+        ArgumentNullException.ThrowIfNull(type);
+
+        if (type.IsGenericType)
+        {
+            var genericDef = type.GetGenericTypeDefinition();
+            if (genericDef == typeof(Dictionary<,>) ||
+                genericDef == typeof(IDictionary<,>) ||
+                genericDef == typeof(IReadOnlyDictionary<,>))
+            {
+                var args = type.GetGenericArguments();
+                return (args[0], args[1]);
+            }
+        }
+
+        var dictionaryInterface = type.GetInterfaces()
+            .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDictionary<,>));
+        if (dictionaryInterface != null)
+        {
+            var args = dictionaryInterface.GetGenericArguments();
+            return (args[0], args[1]);
+        }
+
+        return null;
     }
 
     /// <summary>

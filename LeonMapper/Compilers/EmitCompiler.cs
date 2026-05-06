@@ -1,8 +1,11 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
+using LeonMapper.Config;
+using LeonMapper.Convert;
 using LeonMapper.Plan;
 using LeonMapper.Exceptions;
 using LeonMapper.Utils;
@@ -164,6 +167,29 @@ public class EmitCompiler<TSource, TTarget> : ICompiler<TSource, TTarget> where 
                 if (mapMethod == null)
                 {
                     throw new InvalidOperationException("未找到 DelegateInvoker.MapCollection 方法");
+                }
+
+                il.Emit(OpCodes.Ldloc, targetLocal);
+                emitLoadSource();
+                emitGetValue();
+                il.Emit(OpCodes.Call, mapMethod);
+                emitSetValue();
+                break;
+            }
+
+            case MappingStrategy.Dictionary:
+            {
+                var sourceKeyType = mapping.DictionarySourceKeyType!;
+                var sourceValueType = mapping.DictionarySourceValueType!;
+                var targetKeyType = mapping.DictionaryTargetKeyType!;
+                var targetValueType = mapping.DictionaryTargetValueType!;
+
+                var mapMethod = typeof(DelegateInvoker)
+                    .GetMethod(nameof(DelegateInvoker.MapDictionary))
+                    ?.MakeGenericMethod(sourceKeyType, sourceValueType, targetKeyType, targetValueType, sourceType, targetType);
+                if (mapMethod == null)
+                {
+                    throw new InvalidOperationException("未找到 DelegateInvoker.MapDictionary 方法");
                 }
 
                 il.Emit(OpCodes.Ldloc, targetLocal);
@@ -610,6 +636,49 @@ internal static class DelegateInvoker
 
         return CollectionMaterializer.Materialize<TTargetElement, TTargetCollection>(mapped);
     }
+
+    /// <summary>
+    /// 执行 Dictionary 类型映射
+    /// </summary>
+    public static TTargetCollection? MapDictionary<TSourceKey, TSourceValue, TTargetKey, TTargetValue, TSourceCollection, TTargetCollection>(
+        TSourceCollection? source)
+        where TTargetKey : notnull
+        where TTargetCollection : class
+    {
+        if (source == null)
+        {
+            return default;
+        }
+
+        var dict = (IEnumerable<KeyValuePair<TSourceKey, TSourceValue>>)source;
+        var mapped = DictionaryMapperCache<TSourceKey, TSourceValue, TTargetKey, TTargetValue>.Map(dict);
+
+        var targetType = typeof(TTargetCollection);
+        var dictType = typeof(Dictionary<TTargetKey, TTargetValue>);
+
+        // 目标类型正好是 Dictionary<K,V>
+        if (targetType == dictType)
+        {
+            return mapped as TTargetCollection;
+        }
+
+        // 目标类型是 IDictionary<K,V> 或 IReadOnlyDictionary<K,V>，Dictionary 实现了这些接口
+        var idictType = typeof(IDictionary<TTargetKey, TTargetValue>);
+        var iroDictType = typeof(IReadOnlyDictionary<TTargetKey, TTargetValue>);
+        if (targetType == idictType || targetType == iroDictType)
+        {
+            return mapped as TTargetCollection;
+        }
+
+        // 支持通过构造函数(IDictionary<K,V>) 创建的自定义 Dictionary 类型
+        var ctor = targetType.GetConstructor(new[] { idictType });
+        if (ctor != null)
+        {
+            return ctor.Invoke(new object[] { mapped }) as TTargetCollection;
+        }
+
+        throw new InvalidOperationException($"不支持的 Dictionary 目标类型: {targetType.Name}，目标类型必须是 Dictionary<{typeof(TTargetKey).Name},{typeof(TTargetValue).Name}>、{idictType.Name}、{iroDictType.Name} 或提供 IDictionary<,> 构造函数的类型");
+    }
 }
 
 /// <summary>
@@ -660,6 +729,116 @@ internal static class CollectionMapperCache<TSource, TTarget>
     }
 
     public static TTarget Invoke(TSource source)
+    {
+        return _mapFunc(source);
+    }
+}
+
+/// <summary>
+/// Dictionary 映射器缓存：缓存 Dictionary&lt;K,V&gt; -> Dictionary&lt;K2,V2&gt; 的映射委托
+/// </summary>
+internal static class DictionaryMapperCache<TSourceKey, TSourceValue, TTargetKey, TTargetValue>
+    where TTargetKey : notnull
+{
+    private static readonly Func<IEnumerable<KeyValuePair<TSourceKey, TSourceValue>>, Dictionary<TTargetKey, TTargetValue>> _mapFunc;
+
+    static DictionaryMapperCache()
+    {
+        var sourceKvpType = typeof(KeyValuePair<TSourceKey, TSourceValue>);
+        var targetDictType = typeof(Dictionary<TTargetKey, TTargetValue>);
+
+        // 通过 ExpressionCompiler 的策略判断需要哪种映射方式
+        var sourceKeyIsBase = TypeUtils.IsBaseType(typeof(TSourceKey));
+        var sourceValueIsBase = TypeUtils.IsBaseType(typeof(TSourceValue));
+        var targetKeyIsBase = TypeUtils.IsBaseType(typeof(TTargetKey));
+        var targetValueIsBase = TypeUtils.IsBaseType(typeof(TTargetValue));
+
+        var sourceParam = Expression.Parameter(sourceKvpType, "kvp");
+
+        // Key selector
+        Expression keyExpr;
+        if (typeof(TSourceKey) != typeof(TTargetKey))
+        {
+            if (sourceKeyIsBase && targetKeyIsBase)
+            {
+                var converter = Convert.ConvertFactory.GetConverter(typeof(TSourceKey), typeof(TTargetKey), Config.MapperConfig.GetDefaultConverterScope());
+                if (converter != null)
+                {
+                    var convertMethod = converter.GetType().GetMethod("Convert")!;
+                    keyExpr = Expression.Call(Expression.Constant(converter), convertMethod, Expression.Property(sourceParam, "Key"));
+                }
+                else
+                {
+                    keyExpr = Expression.Convert(Expression.Property(sourceParam, "Key"), typeof(TTargetKey));
+                }
+            }
+            else
+            {
+                keyExpr = Expression.Convert(Expression.Property(sourceParam, "Key"), typeof(TTargetKey));
+            }
+        }
+        else
+        {
+            keyExpr = Expression.Property(sourceParam, "Key");
+        }
+
+        // Value selector
+        Expression valueExpr;
+        if (typeof(TSourceValue) != typeof(TTargetValue))
+        {
+            if (sourceValueIsBase && targetValueIsBase)
+            {
+                var converter = Convert.ConvertFactory.GetConverter(typeof(TSourceValue), typeof(TTargetValue), Config.MapperConfig.GetDefaultConverterScope());
+                if (converter != null)
+                {
+                    var convertMethod = converter.GetType().GetMethod("Convert")!;
+                    valueExpr = Expression.Call(Expression.Constant(converter), convertMethod, Expression.Property(sourceParam, "Value"));
+                }
+                else
+                {
+                    valueExpr = Expression.Convert(Expression.Property(sourceParam, "Value"), typeof(TTargetValue));
+                }
+            }
+            else if (!sourceValueIsBase && !targetValueIsBase)
+            {
+                // 复杂类型 Value 映射
+                var mapper = CachedMapperFactory.GetOrCreateMapper(typeof(TSourceValue), typeof(TTargetValue));
+                var mapMethod = mapper.GetType().GetMethod("MapTo")!;
+                valueExpr = Expression.Call(Expression.Constant(mapper), mapMethod, Expression.Property(sourceParam, "Value"));
+                valueExpr = Expression.Convert(valueExpr, typeof(TTargetValue));
+            }
+            else
+            {
+                valueExpr = Expression.Convert(Expression.Property(sourceParam, "Value"), typeof(TTargetValue));
+            }
+        }
+        else
+        {
+            valueExpr = Expression.Property(sourceParam, "Value");
+        }
+
+        // ToDictionary(sourceEnumerable, keySelector, valueSelector)
+        var sourceEnumerableType = typeof(IEnumerable<>).MakeGenericType(sourceKvpType);
+        var sourceEnumerableParam = Expression.Parameter(sourceEnumerableType, "source");
+
+        var toDictionaryMethod = typeof(Enumerable)
+            .GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .First(m => m.Name == "ToDictionary"
+                        && m.GetGenericArguments().Length == 3
+                        && m.GetParameters().Length == 3)
+            .MakeGenericMethod(sourceKvpType, typeof(TTargetKey), typeof(TTargetValue));
+
+        var keyLambda = Expression.Lambda(keyExpr, sourceParam);
+        var valueLambda = Expression.Lambda(valueExpr, sourceParam);
+        var toDictionaryCall = Expression.Call(toDictionaryMethod, sourceEnumerableParam, keyLambda, valueLambda);
+
+        var lambda = Expression.Lambda<Func<IEnumerable<KeyValuePair<TSourceKey, TSourceValue>>, Dictionary<TTargetKey, TTargetValue>>>(
+            toDictionaryCall, sourceEnumerableParam);
+
+        _mapFunc = lambda.Compile();
+    }
+
+    public static Dictionary<TTargetKey, TTargetValue> Map(IEnumerable<KeyValuePair<TSourceKey, TSourceValue>> source)
     {
         return _mapFunc(source);
     }

@@ -140,6 +140,7 @@ public class ExpressionCompiler<TSource, TTarget> : ICompiler<TSource, TTarget> 
             MappingStrategy.Convert => BuildConvertBinding(targetProp, sourceAccess, mapping),
             MappingStrategy.Complex => BuildComplexBinding(targetProp, sourceAccess, mapping),
             MappingStrategy.Collection => BuildCollectionBinding(targetProp, sourceAccess, mapping),
+            MappingStrategy.Dictionary => BuildDictionaryBinding(targetProp, sourceAccess, mapping),
             _ => null
         };
     }
@@ -160,6 +161,7 @@ public class ExpressionCompiler<TSource, TTarget> : ICompiler<TSource, TTarget> 
             MappingStrategy.Convert => BuildConvertBinding(targetField, sourceAccess, mapping),
             MappingStrategy.Complex => BuildComplexBinding(targetField, sourceAccess, mapping),
             MappingStrategy.Collection => BuildCollectionBinding(targetField, sourceAccess, mapping),
+            MappingStrategy.Dictionary => BuildDictionaryBinding(targetField, sourceAccess, mapping),
             _ => null
         };
     }
@@ -388,5 +390,123 @@ public class ExpressionCompiler<TSource, TTarget> : ICompiler<TSource, TTarget> 
 
         // 根据目标类型物化
         return CollectionMaterializer.BuildMaterializeExpression(selectCall, targetType, targetElementType);
+    }
+
+    /// <summary>
+    /// 构建 Dictionary 类型映射的成员绑定表达式
+    /// </summary>
+    private static MemberBinding BuildDictionaryBinding(MemberInfo targetMember, Expression sourceAccess,
+        MemberMapping mapping)
+    {
+        var sourceMemberType = MemberUtils.GetMemberType(mapping.SourceMember);
+        var targetMemberType = MemberUtils.GetMemberType(targetMember);
+
+        var sourceKeyType = mapping.DictionarySourceKeyType!;
+        var sourceValueType = mapping.DictionarySourceValueType!;
+        var targetKeyType = mapping.DictionaryTargetKeyType!;
+        var targetValueType = mapping.DictionaryTargetValueType!;
+
+        var kvpType = typeof(KeyValuePair<,>).MakeGenericType(sourceKeyType, sourceValueType);
+        var kvpParam = Expression.Parameter(kvpType, "kvp");
+
+        // Key selector
+        Expression keySelectorExpr;
+        if (mapping.DictionaryKeyConverter != null)
+        {
+            var keyProp = Expression.Property(kvpParam, "Key");
+            keySelectorExpr = BuildConverterCall(mapping.DictionaryKeyConverter, keyProp, targetKeyType);
+        }
+        else if (sourceKeyType != targetKeyType)
+        {
+            keySelectorExpr = Expression.Convert(Expression.Property(kvpParam, "Key"), targetKeyType);
+        }
+        else
+        {
+            keySelectorExpr = Expression.Property(kvpParam, "Key");
+        }
+
+        // Value selector
+        Expression valueSelectorExpr;
+        var valueProp = Expression.Property(kvpParam, "Value");
+
+        if (mapping.DictionaryValueConverter != null)
+        {
+            valueSelectorExpr = BuildConverterCall(mapping.DictionaryValueConverter, valueProp, targetValueType);
+        }
+        else if (mapping.DictionaryValueNestedPlan != null)
+        {
+            valueSelectorExpr = BuildComplexValueMapping(valueProp, sourceValueType, targetValueType);
+        }
+        else if (sourceValueType != targetValueType)
+        {
+            valueSelectorExpr = Expression.Convert(valueProp, targetValueType);
+        }
+        else
+        {
+            valueSelectorExpr = valueProp;
+        }
+
+        // ToDictionary(source, keySelector, elementSelector)
+        var toDictionaryMethod = typeof(Enumerable)
+            .GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .First(m => m.Name == "ToDictionary"
+                        && m.GetGenericArguments().Length == 3
+                        && m.GetParameters().Length == 3)
+            .MakeGenericMethod(kvpType, targetKeyType, targetValueType);
+
+        var keyLambda = Expression.Lambda(keySelectorExpr, kvpParam);
+        var valueLambda = Expression.Lambda(valueSelectorExpr, kvpParam);
+        var toDictionaryCall = Expression.Call(toDictionaryMethod, sourceAccess, keyLambda, valueLambda);
+
+        Expression resultExpr = toDictionaryCall;
+        if (resultExpr.Type != targetMemberType)
+        {
+            resultExpr = Expression.Convert(resultExpr, targetMemberType);
+        }
+
+        var nullCheck = Expression.Condition(
+            Expression.Equal(sourceAccess, Expression.Constant(null, sourceMemberType)),
+            Expression.Constant(null, targetMemberType),
+            resultExpr
+        );
+
+        if (targetMember is PropertyInfo prop)
+        {
+            return Expression.Bind(prop, nullCheck);
+        }
+
+        return Expression.Bind((FieldInfo)targetMember, nullCheck);
+    }
+
+    /// <summary>
+    /// 构建转换器调用表达式
+    /// </summary>
+    private static Expression BuildConverterCall(object converter, Expression input, Type targetType)
+    {
+        var converterType = converter.GetType();
+        var convertMethod = converterType.GetMethod("Convert")
+            ?? throw new InvalidOperationException($"转换器 {converterType.Name} 缺少 Convert 方法");
+
+        var converterInstance = Expression.Constant(converter);
+        Expression call = Expression.Call(converterInstance, convertMethod, input);
+        if (call.Type != targetType)
+        {
+            call = Expression.Convert(call, targetType);
+        }
+        return call;
+    }
+
+    /// <summary>
+    /// 构建复杂类型 Value 映射表达式（调用 Mapper）
+    /// </summary>
+    private static Expression BuildComplexValueMapping(Expression sourceAccess, Type sourceValueType, Type targetValueType)
+    {
+        var mapper = CachedMapperFactory.GetOrCreateMapper(sourceValueType, targetValueType);
+        var mapperConstant = Expression.Constant(mapper);
+        var mapMethod = mapper.GetType().GetMethod("MapTo")
+            ?? throw new InvalidOperationException($"Mapper<{sourceValueType.Name}, {targetValueType.Name}> 缺少 MapTo 方法");
+
+        var mapCall = Expression.Call(mapperConstant, mapMethod, sourceAccess);
+        return Expression.Convert(mapCall, targetValueType);
     }
 }
