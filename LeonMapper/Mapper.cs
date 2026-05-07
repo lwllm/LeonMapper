@@ -2,6 +2,7 @@ using LeonMapper.Compilers;
 using LeonMapper.Config;
 using LeonMapper.Plan;
 using LeonMapper.Plan.Builder;
+using LeonMapper.Utils;
 using LeonMapper.Validation;
 
 namespace LeonMapper;
@@ -58,7 +59,19 @@ public class Mapper<TSource, TDestination> where TDestination : class
     /// </summary>
     public TDestination? MapTo(TSource source)
     {
-        return _compiler.Map(source);
+        if (!MappingDepthTracker.TryIncrement())
+        {
+            return default;
+        }
+
+        try
+        {
+            return _compiler.Map(source);
+        }
+        finally
+        {
+            MappingDepthTracker.Decrement();
+        }
     }
 
     /// <summary>

@@ -4,6 +4,7 @@ using BenchmarkDotNet.Columns;
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Jobs;
 using LeonMapper.Config;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace LeonMapper.Benchmarks;
 
@@ -23,7 +24,7 @@ public abstract class BenchmarkBase
         }
     }
 
-    protected IMapper AutoMapperInstance { get; private set; } = null!;
+    protected AutoMapper.IMapper AutoMapperInstance { get; private set; } = null!;
 
     [GlobalSetup]
     public void GlobalSetup()
@@ -36,7 +37,7 @@ public abstract class BenchmarkBase
             cfg.CreateMap<ItemSource, ItemTarget>();
             cfg.CreateMap<CollectionSource, CollectionTarget>();
             cfg.CreateMap<TypeConvertSource, TypeConvertTarget>();
-        });
+        }, NullLoggerFactory.Instance);
         AutoMapperInstance = config.CreateMapper();
 
         SetupData();

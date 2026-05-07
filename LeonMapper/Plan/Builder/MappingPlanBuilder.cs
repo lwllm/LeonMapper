@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Collections.Concurrent;
 using System.Reflection;
@@ -13,6 +14,14 @@ namespace LeonMapper.Plan.Builder;
 public static class MappingPlanBuilder
 {
     private static readonly ConcurrentDictionary<(Type, Type, int, int), TypeMappingPlan> _planCache = new();
+    private static readonly ConcurrentDictionary<(Type, Type), TypeMappingPlan> _emptyPlanCache = new();
+
+    // 追踪当前正在构建的计划类型对，防止自引用类型在计划构建阶段无限递归
+    private static readonly ThreadLocal<HashSet<(Type, Type)>> _buildingTypes =
+        new(() => new HashSet<(Type, Type)>());
+
+    private static readonly MemberMapping[] s_emptyMappings = Array.Empty<MemberMapping>();
+    private static readonly MemberInfo[] s_emptyMembers = Array.Empty<MemberInfo>();
 
     /// <summary>
     /// 构建映射计划（泛型入口）
@@ -42,14 +51,31 @@ public static class MappingPlanBuilder
     }
 
     /// <summary>
-    /// 构建映射计划（非泛型入口，带缓存）
+    /// 构建映射计划（非泛型入口，带缓存）。
+    /// 包含自引用类型检测：当类型对正在被构建时递归调用，返回空计划阻止无限递归。
     /// </summary>
     public static TypeMappingPlan Build(Type sourceType, Type targetType, PlanBuildOptions? options = null)
     {
         options ??= PlanBuildOptions.Default;
         var cacheKey = (sourceType, targetType, options.GetHashCode(), 0);
 
-        return _planCache.GetOrAdd(cacheKey, _ => BuildCore(sourceType, targetType, options, null));
+        // 检测循环引用：如果该类型对正在当前线程的构建栈中，返回空计划
+        if (!_buildingTypes.Value!.Add((sourceType, targetType)))
+        {
+            return _emptyPlanCache.GetOrAdd((sourceType, targetType), _ =>
+                new TypeMappingPlan(sourceType, targetType,
+                    s_emptyMappings, s_emptyMappings,
+                    s_emptyMembers, s_emptyMembers));
+        }
+
+        try
+        {
+            return _planCache.GetOrAdd(cacheKey, _ => BuildCore(sourceType, targetType, options, null));
+        }
+        finally
+        {
+            _buildingTypes.Value!.Remove((sourceType, targetType));
+        }
     }
 
     /// <summary>

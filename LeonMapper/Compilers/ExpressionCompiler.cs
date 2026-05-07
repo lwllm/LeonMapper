@@ -99,13 +99,20 @@ public class ExpressionCompiler<TSource, TTarget> : ICompiler<TSource, TTarget> 
     }
 
     /// <summary>
-    /// 构建内联集合映射表达式：使用 foreach + List.Add 模式，避免 Select().ToList() 的迭代器开销
+    /// 构建内联集合映射表达式：使用 foreach + List.Add 模式，
+    /// 当源类型实现 ICollection&lt;T&gt; 时预分配 List 容量避免扩容开销
     /// </summary>
     private static Expression BuildInlineCollectionMapping(Expression sourceAccess,
         Type sourceType, Type targetType, Type sourceElementType, Type targetElementType)
     {
+        // 基本类型的元素（int→long 等）：走转换器路径
+        if (TypeUtils.IsBaseType(sourceElementType) && TypeUtils.IsBaseType(targetElementType))
+        {
+            return BuildPrimitiveCollectionExpression(sourceAccess, sourceType, targetType,
+                sourceElementType, targetElementType);
+        }
+
         var targetListType = typeof(List<>).MakeGenericType(targetElementType);
-        var listCtor = targetListType.GetConstructor(Type.EmptyTypes)!;
         var addMethod = targetListType.GetMethod("Add", new[] { targetElementType })!;
 
         var loopVar = Expression.Parameter(sourceElementType, "item");
@@ -123,7 +130,7 @@ public class ExpressionCompiler<TSource, TTarget> : ICompiler<TSource, TTarget> 
 
             var block = Expression.Block(
                 new[] { listVar },
-                Expression.Assign(listVar, Expression.New(listCtor)),
+                Expression.Assign(listVar, BuildListCreation(sourceAccess, sourceElementType, targetListType)),
                 forEachExpr,
                 Expression.Call(toArrayMethod, listVar));
 
@@ -140,7 +147,7 @@ public class ExpressionCompiler<TSource, TTarget> : ICompiler<TSource, TTarget> 
 
             return Expression.Block(
                 new[] { listVar },
-                Expression.Assign(listVar, Expression.New(listCtor)),
+                Expression.Assign(listVar, BuildListCreation(sourceAccess, sourceElementType, targetListType)),
                 forEachExpr,
                 listVar);
         }
@@ -155,7 +162,7 @@ public class ExpressionCompiler<TSource, TTarget> : ICompiler<TSource, TTarget> 
         {
             return Expression.Block(
                 new[] { listVar2 },
-                Expression.Assign(listVar2, Expression.New(listCtor)),
+                Expression.Assign(listVar2, BuildListCreation(sourceAccess, sourceElementType, targetListType)),
                 forEachExpr2,
                 Expression.New(ctor, listVar2));
         }
@@ -170,6 +177,22 @@ public class ExpressionCompiler<TSource, TTarget> : ICompiler<TSource, TTarget> 
         var lambda = Expression.Lambda(lambdaType, elementExpr, loopVar);
         var selectCall = Expression.Call(selectMethod, sourceAccess, lambda);
         return CollectionMaterializer.BuildMaterializeExpression(selectCall, targetType, targetElementType);
+    }
+
+    /// <summary>
+    /// 构建 List 创建表达式，当源类型实现 ICollection{T} 时预分配容量
+    /// </summary>
+    private static Expression BuildListCreation(Expression sourceAccess, Type sourceElementType, Type targetListType)
+    {
+        var collectionType = typeof(ICollection<>).MakeGenericType(sourceElementType);
+        if (collectionType.IsAssignableFrom(sourceAccess.Type))
+        {
+            var countCtor = targetListType.GetConstructor(new[] { typeof(int) })!;
+            var countProp = collectionType.GetProperty("Count")!;
+            return Expression.New(countCtor, Expression.Property(sourceAccess, countProp));
+        }
+
+        return Expression.New(targetListType.GetConstructor(Type.EmptyTypes)!);
     }
 
     /// <summary>

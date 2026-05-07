@@ -136,12 +136,11 @@ public class EmitCompiler<TSource, TTarget> : ICompiler<TSource, TTarget> where 
 
             case MappingStrategy.Complex:
             {
-                var mapMethod = typeof(DelegateInvoker)
-                    .GetMethod(nameof(DelegateInvoker.MapComplex))
-                    ?.MakeGenericMethod(sourceType, targetType);
+                var helperType = typeof(ComplexMapperHelper<,>).MakeGenericType(sourceType, targetType);
+                var mapMethod = helperType.GetMethod("Map", new[] { sourceType });
                 if (mapMethod == null)
                 {
-                    throw new InvalidOperationException("未找到 DelegateInvoker.MapComplex 方法");
+                    throw new InvalidOperationException($"未找到 ComplexMapperHelper<{sourceType.Name}, {targetType.Name}>.Map 方法");
                 }
 
                 il.Emit(OpCodes.Ldloc, targetLocal);
@@ -607,7 +606,9 @@ internal static class DelegateInvoker
     }
 
     /// <summary>
-    /// 执行集合类型映射，支持 List、Array、IEnumerable 之间的转换
+    /// 执行集合类型映射，支持 List、Array、IEnumerable 之间的转换。
+    /// 对已知类型（如 List{T}）使用 for + 索引访问以消除枚举器装箱，
+    /// 同时预分配 List 容量避免扩容开销
     /// </summary>
     public static TTargetCollection? MapCollection<TSourceElement, TTargetElement, TSourceCollection, TTargetCollection>(
         TSourceCollection? source)
@@ -618,23 +619,90 @@ internal static class DelegateInvoker
             return default;
         }
 
-        var enumerable = (IEnumerable<TSourceElement>)source;
         var isBaseType = typeof(TSourceElement).IsPrimitive || typeof(TSourceElement) == typeof(string) || typeof(TSourceElement) == typeof(decimal);
 
-        IEnumerable<TTargetElement> mapped;
+        List<TTargetElement> list;
 
-        if (isBaseType)
+        // List<T> 源类型：用 for + Count + 索引器，避免枚举器装箱
+        if (source is List<TSourceElement> sourceList)
         {
-            // 基础类型转换：使用缓存的强类型委托
-            mapped = enumerable.Select(x => CollectionConverterCache<TSourceElement, TTargetElement>.Invoke(x));
+            list = new List<TTargetElement>(sourceList.Count);
+            if (isBaseType)
+            {
+                for (var i = 0; i < sourceList.Count; i++)
+                {
+                    list.Add(CollectionConverterCache<TSourceElement, TTargetElement>.Invoke(sourceList[i]));
+                }
+            }
+            else
+            {
+                for (var i = 0; i < sourceList.Count; i++)
+                {
+                    list.Add(CollectionMapperCache<TSourceElement, TTargetElement>.Invoke(sourceList[i]));
+                }
+            }
+            return MaterializeList<TTargetElement, TTargetCollection>(list);
+        }
+
+        // 其他 ICollection<T> 源：foreach + 预分配
+        if (source is ICollection<TSourceElement> collection)
+        {
+            list = new List<TTargetElement>(collection.Count);
         }
         else
         {
-            // 复杂类型转换：使用缓存的强类型委托
-            mapped = enumerable.Select(x => CollectionMapperCache<TSourceElement, TTargetElement>.Invoke(x));
+            list = new List<TTargetElement>();
         }
 
-        return CollectionMaterializer.Materialize<TTargetElement, TTargetCollection>(mapped);
+        var enumerable = (IEnumerable<TSourceElement>)source;
+        if (isBaseType)
+        {
+            foreach (var item in enumerable)
+            {
+                list.Add(CollectionConverterCache<TSourceElement, TTargetElement>.Invoke(item));
+            }
+        }
+        else
+        {
+            foreach (var item in enumerable)
+            {
+                list.Add(CollectionMapperCache<TSourceElement, TTargetElement>.Invoke(item));
+            }
+        }
+
+        return MaterializeList<TTargetElement, TTargetCollection>(list);
+    }
+
+    /// <summary>
+    /// 将 List{T} 物化为目标集合类型
+    /// </summary>
+    private static TTargetCollection? MaterializeList<TTargetElement, TTargetCollection>(List<TTargetElement> list)
+        where TTargetCollection : class
+    {
+        var targetType = typeof(TTargetCollection);
+
+        if (targetType == typeof(List<TTargetElement>)
+            || targetType == typeof(IEnumerable<TTargetElement>)
+            || targetType == typeof(IList<TTargetElement>)
+            || targetType == typeof(IReadOnlyList<TTargetElement>)
+            || targetType == typeof(ICollection<TTargetElement>)
+            || targetType == typeof(IReadOnlyCollection<TTargetElement>))
+        {
+            return list as TTargetCollection;
+        }
+
+        if (targetType.IsArray)
+        {
+            return list.ToArray() as TTargetCollection;
+        }
+
+        var ctor = targetType.GetConstructor(new[] { typeof(IEnumerable<TTargetElement>) });
+        if (ctor != null)
+        {
+            return ctor.Invoke(new object[] { list }) as TTargetCollection;
+        }
+
+        throw new InvalidOperationException($"不支持的集合目标类型: {targetType.Name}");
     }
 
     /// <summary>
@@ -841,5 +909,31 @@ internal static class DictionaryMapperCache<TSourceKey, TSourceValue, TTargetKey
     public static Dictionary<TTargetKey, TTargetValue> Map(IEnumerable<KeyValuePair<TSourceKey, TSourceValue>> source)
     {
         return _mapFunc(source);
+    }
+}
+
+/// <summary>
+/// 复杂类型映射的静态泛型缓存：在静态构造时预解析 Mapper，
+/// 避免运行时每次调用都进行字典查找
+/// </summary>
+internal static class ComplexMapperHelper<TSource, TTarget>
+    where TTarget : class
+{
+    private static readonly Mapper<TSource, TTarget> _mapper;
+
+    static ComplexMapperHelper()
+    {
+        _mapper = (Mapper<TSource, TTarget>)CachedMapperFactory
+            .GetOrCreateMapper(typeof(TSource), typeof(TTarget));
+    }
+
+    public static TTarget? Map(TSource? source)
+    {
+        if (source == null)
+        {
+            return default;
+        }
+
+        return _mapper.MapTo(source);
     }
 }

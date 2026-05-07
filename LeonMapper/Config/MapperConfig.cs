@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using LeonMapper.Plan;
+using LeonMapper.Utils;
 
 namespace LeonMapper.Config;
 
@@ -39,6 +40,23 @@ public class MapperConfig
         {
             _defaultProcessType = defaultProcessType;
         }
+    }
+
+    /// <summary>
+    /// 设置最大映射深度，防止循环引用导致 StackOverflow。
+    /// 超出此深度时 MapTo 返回 default。默认值 100。
+    /// </summary>
+    public static void SetMaxDepth(int maxDepth)
+    {
+        MappingDepthTracker.SetMaxDepth(maxDepth);
+    }
+
+    /// <summary>
+    /// 获取当前最大映射深度
+    /// </summary>
+    public static int GetMaxDepth()
+    {
+        return MappingDepthTracker.GetMaxDepth();
     }
 
     /// <summary>
