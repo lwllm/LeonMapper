@@ -199,14 +199,6 @@ var result2 = emitMapper.MapTo(user);
 - `ConverterScope.Common` — 仅使用标记为 `[CommonConverter]` 的常用转换器
 - `ConverterScope.All` — 使用所有可用的转换器（包括可能有精度损失或溢出的转换）
 
-## 运行测试
-
-```bash
-dotnet test LeonMapper.Test/LeonMapper.Test.csproj
-```
-
-测试包含性能基准，对比手写映射、LeonMapper 和 AutoMapper 的执行耗时。
-
 ## License
 
 [MIT](LICENSE)
