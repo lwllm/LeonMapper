@@ -2,6 +2,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using LeonMapper.Convert;
 using LeonMapper.Plan;
+using LeonMapper.Plan.Builder;
 using LeonMapper.Utils;
 
 namespace LeonMapper.Compilers;
@@ -98,30 +99,177 @@ public class ExpressionCompiler<TSource, TTarget> : ICompiler<TSource, TTarget> 
     }
 
     /// <summary>
-    /// 构建内联集合映射表达式（用于纯集合类型映射，如 List<T> -> List<TNew>）
+    /// 构建内联集合映射表达式：使用 foreach + List.Add 模式，避免 Select().ToList() 的迭代器开销
     /// </summary>
     private static Expression BuildInlineCollectionMapping(Expression sourceAccess,
         Type sourceType, Type targetType, Type sourceElementType, Type targetElementType)
     {
-        // 获取元素映射委托
-        var mapFunc = CachedMapperFactory.GetOrCreateMapFunc(sourceElementType, targetElementType);
-        var funcType = typeof(Func<,>).MakeGenericType(sourceElementType, targetElementType);
-        var funcConstant = Expression.Constant(mapFunc, funcType);
+        var targetListType = typeof(List<>).MakeGenericType(targetElementType);
+        var listCtor = targetListType.GetConstructor(Type.EmptyTypes)!;
+        var addMethod = targetListType.GetMethod("Add", new[] { targetElementType })!;
 
-        // 构建 Select 表达式
+        var loopVar = Expression.Parameter(sourceElementType, "item");
+        var elementExpr = BuildElementMappingExpression(loopVar, sourceElementType, targetElementType);
+
+        // 数组目标：先收集到 List，最后 ToArray()
+        if (targetType.IsArray)
+        {
+            var listVar = Expression.Parameter(targetListType, "list");
+            var forEachExpr = BuildForEach(sourceAccess, loopVar,
+                Expression.Call(listVar, addMethod, elementExpr));
+
+            var toArrayMethod = typeof(Enumerable).GetMethod("ToArray")!
+                .MakeGenericMethod(targetElementType);
+
+            var block = Expression.Block(
+                new[] { listVar },
+                Expression.Assign(listVar, Expression.New(listCtor)),
+                forEachExpr,
+                Expression.Call(toArrayMethod, listVar));
+
+            return Expression.Convert(block, targetType);
+        }
+
+        // List<T> 目标：直接构建 List 并 Add
+        var isTargetList = targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(List<>);
+        if (isTargetList)
+        {
+            var listVar = Expression.Parameter(targetListType, "list");
+            var forEachExpr = BuildForEach(sourceAccess, loopVar,
+                Expression.Call(listVar, addMethod, elementExpr));
+
+            return Expression.Block(
+                new[] { listVar },
+                Expression.Assign(listVar, Expression.New(listCtor)),
+                forEachExpr,
+                listVar);
+        }
+
+        // 其他 IEnumerable<T> 派生类型：先构建 List，再用目标类型构造函数转换
+        var listVar2 = Expression.Parameter(targetListType, "list");
+        var forEachExpr2 = BuildForEach(sourceAccess, loopVar,
+            Expression.Call(listVar2, addMethod, elementExpr));
+
+        var ctor = targetType.GetConstructor(new[] { typeof(IEnumerable<>).MakeGenericType(targetElementType) });
+        if (ctor != null)
+        {
+            return Expression.Block(
+                new[] { listVar2 },
+                Expression.Assign(listVar2, Expression.New(listCtor)),
+                forEachExpr2,
+                Expression.New(ctor, listVar2));
+        }
+
+        // 最终回退：Select + 物化
         var selectMethod = typeof(Enumerable)
             .GetMethods(BindingFlags.Public | BindingFlags.Static)
             .First(m => m.Name == "Select" && m.GetParameters().Length == 2)
             .MakeGenericMethod(sourceElementType, targetElementType);
 
-        var param = Expression.Parameter(sourceElementType, "x");
-        var invokeCall = Expression.Invoke(funcConstant, param);
         var lambdaType = typeof(Func<,>).MakeGenericType(sourceElementType, targetElementType);
-        var lambda = Expression.Lambda(lambdaType, invokeCall, param);
+        var lambda = Expression.Lambda(lambdaType, elementExpr, loopVar);
         var selectCall = Expression.Call(selectMethod, sourceAccess, lambda);
-
-        // 根据目标类型物化
         return CollectionMaterializer.BuildMaterializeExpression(selectCall, targetType, targetElementType);
+    }
+
+    /// <summary>
+    /// 手动构建 foreach 循环表达式（兼容 .NET 6.0，Expression.ForEach 需要 .NET 7+）
+    /// </summary>
+    private static Expression BuildForEach(Expression collection, ParameterExpression loopVar, Expression body)
+    {
+        var elementType = loopVar.Type;
+        var enumerableType = typeof(IEnumerable<>).MakeGenericType(elementType);
+        var enumeratorType = typeof(IEnumerator<>).MakeGenericType(elementType);
+
+        var getEnumeratorMethod = enumerableType.GetMethod("GetEnumerator")!;
+        var moveNextMethod = typeof(System.Collections.IEnumerator).GetMethod("MoveNext")!;
+        var currentProp = enumeratorType.GetProperty("Current")!;
+        var disposeMethod = typeof(IDisposable).GetMethod("Dispose")!;
+
+        var enumeratorVar = Expression.Parameter(enumeratorType, "enumerator");
+        var breakLabel = Expression.Label("breakLabel");
+
+        // enumerator = collection.GetEnumerator()
+        var assignEnumerator = Expression.Assign(enumeratorVar,
+            Expression.Call(collection, getEnumeratorMethod));
+
+        // loopVar = enumerator.Current
+        var assignCurrent = Expression.Assign(loopVar,
+            Expression.Property(enumeratorVar, currentProp));
+
+        // while (enumerator.MoveNext()) { loopVar = enumerator.Current; body; }
+        var whileLoop = Expression.Loop(
+            Expression.IfThenElse(
+                Expression.Call(enumeratorVar, moveNextMethod),
+                Expression.Block(assignCurrent, body),
+                Expression.Break(breakLabel)),
+            breakLabel);
+
+        // try { while loop } finally { enumerator.Dispose(); }
+        var tryFinally = Expression.TryFinally(whileLoop,
+            Expression.Call(enumeratorVar, disposeMethod));
+
+        return Expression.Block(
+            new[] { enumeratorVar, loopVar },
+            assignEnumerator,
+            tryFinally);
+    }
+
+    /// <summary>
+    /// 构建单个元素的映射表达式（内联，避免委托间接调用）
+    /// </summary>
+    private static Expression BuildElementMappingExpression(ParameterExpression sourceParam,
+        Type sourceElementType, Type targetElementType)
+    {
+        // 检查元素类型是否都是集合类型（嵌套集合场景）
+        var nestedSourceElementType = TypeUtils.GetCollectionElementType(sourceElementType);
+        var nestedTargetElementType = TypeUtils.GetCollectionElementType(targetElementType);
+
+        if (nestedSourceElementType != null && nestedTargetElementType != null)
+        {
+            // 元素本身也是集合，需要递归构建集合映射表达式
+            return BuildInlineCollectionMapping(sourceParam, sourceElementType, targetElementType,
+                nestedSourceElementType, nestedTargetElementType);
+        }
+
+        // 获取元素类型的映射计划
+        var plan = MappingPlanBuilder.Build(sourceElementType, targetElementType);
+
+        // 检查目标类型是否有无参构造函数
+        var constructor = targetElementType.GetConstructor(Type.EmptyTypes);
+        if (constructor == null)
+        {
+            throw new Exceptions.NoEmptyConstructorException(
+                $"类型 {targetElementType.Name} 缺少无参构造函数，无法作为集合元素类型");
+        }
+
+        // new TTarget()
+        var newExpr = Expression.New(constructor);
+
+        var bindings = new List<MemberBinding>();
+
+        // 属性映射
+        foreach (var mapping in plan.PropertyMappings)
+        {
+            var binding = BuildPropertyBinding(sourceParam, mapping);
+            if (binding != null)
+            {
+                bindings.Add(binding);
+            }
+        }
+
+        // 字段映射
+        foreach (var mapping in plan.FieldMappings)
+        {
+            var binding = BuildFieldBinding(sourceParam, mapping);
+            if (binding != null)
+            {
+                bindings.Add(binding);
+            }
+        }
+
+        // MemberInit: new TTarget { Prop1 = x.Prop1, Prop2 = x.Prop2, ... }
+        return Expression.MemberInit(newExpr, bindings);
     }
 
     /// <summary>

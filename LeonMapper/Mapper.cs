@@ -42,6 +42,18 @@ public class Mapper<TSource, TDestination> where TDestination : class
     }
 
     /// <summary>
+    /// 使用 Fluent API 配置创建映射器
+    /// </summary>
+    /// <param name="configure">Fluent API 配置委托</param>
+    public Mapper(Action<MappingConfiguration<TSource, TDestination>> configure)
+    {
+        var config = new MappingConfiguration<TSource, TDestination>();
+        configure(config);
+        var plan = MappingPlanBuilder.Build(config);
+        _compiler = CreateCompiler(plan);
+    }
+
+    /// <summary>
     /// 执行映射
     /// </summary>
     public TDestination? MapTo(TSource source)

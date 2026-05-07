@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using LeonMapper.Config;
 using LeonMapper.Test.Model;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 

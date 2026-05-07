@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using System.Collections.Concurrent;
 using System.Reflection;
 using LeonMapper.Attributes;
@@ -11,49 +12,74 @@ namespace LeonMapper.Plan.Builder;
 /// </summary>
 public static class MappingPlanBuilder
 {
-    private static readonly ConcurrentDictionary<(Type, Type, int), TypeMappingPlan> _planCache = new();
+    private static readonly ConcurrentDictionary<(Type, Type, int, int), TypeMappingPlan> _planCache = new();
 
     /// <summary>
     /// 构建映射计划（泛型入口）
     /// </summary>
-    /// <typeparam name="TSource">源类型</typeparam>
-    /// <typeparam name="TTarget">目标类型</typeparam>
-    /// <param name="options">构建选项，为 null 时使用默认配置</param>
-    /// <returns>类型映射计划</returns>
     public static TypeMappingPlan Build<TSource, TTarget>(PlanBuildOptions? options = null)
     {
         return Build(typeof(TSource), typeof(TTarget), options);
     }
 
     /// <summary>
+    /// 构建 mapping plan with fluent API configuration
+    /// </summary>
+    public static TypeMappingPlan Build<TSource, TTarget>(
+        MappingConfiguration<TSource, TTarget>? config,
+        PlanBuildOptions? options = null) where TTarget : class
+    {
+        options ??= PlanBuildOptions.Default;
+        var configHash = config?.GetConfigHash() ?? 0;
+        var cacheKey = (typeof(TSource), typeof(TTarget), options.GetHashCode(), configHash);
+
+        var fluentActions = config?.GetMemberActions()
+            .Select(x => (x.TargetPropertyName, x.Option.ActionType, x.Option.SourceExpression, x.Option.Converter))
+            .ToList();
+
+        return _planCache.GetOrAdd(cacheKey,
+            _ => BuildCore(typeof(TSource), typeof(TTarget), options, fluentActions));
+    }
+
+    /// <summary>
     /// 构建映射计划（非泛型入口，带缓存）
     /// </summary>
-    /// <param name="sourceType">源类型</param>
-    /// <param name="targetType">目标类型</param>
-    /// <param name="options">构建选项，为 null 时使用默认配置</param>
-    /// <returns>类型映射计划</returns>
     public static TypeMappingPlan Build(Type sourceType, Type targetType, PlanBuildOptions? options = null)
     {
         options ??= PlanBuildOptions.Default;
-        var cacheKey = (sourceType, targetType, options.GetHashCode());
+        var cacheKey = (sourceType, targetType, options.GetHashCode(), 0);
 
-        return _planCache.GetOrAdd(cacheKey, _ => BuildCore(sourceType, targetType, options));
+        return _planCache.GetOrAdd(cacheKey, _ => BuildCore(sourceType, targetType, options, null));
     }
 
     /// <summary>
     /// 核心构建逻辑：发现成员映射关系并生成计划
     /// </summary>
-    private static TypeMappingPlan BuildCore(Type sourceType, Type targetType, PlanBuildOptions options)
+    private static TypeMappingPlan BuildCore(
+        Type sourceType,
+        Type targetType,
+        PlanBuildOptions options,
+        IReadOnlyList<(string TargetPropertyName, MemberMappingActionType ActionType, LambdaExpression? SourceExpression, object? Converter)>? fluentActions)
     {
         // 属性映射
         var propertyPairs = DiscoverPropertyMappings(sourceType, targetType);
+
+        // Fluent API Pass 3：应用 Fluent 配置覆盖属性注解结果
+        if (fluentActions != null && fluentActions.Count > 0)
+        {
+            ApplyFluentOverrides(propertyPairs, sourceType, targetType, fluentActions);
+        }
+
         var propertyMappings = new List<MemberMapping>();
         var mappedSourceProps = new HashSet<string>();
         var mappedTargetProps = new HashSet<string>();
 
+        // 构建 ConvertUsing 查找表
+        var fluentConverters = BuildFluentConverterLookup(fluentActions);
+
         foreach (var (sourceProp, targetProp) in propertyPairs)
         {
-            var mapping = CreateMemberMapping(sourceProp, targetProp, options);
+            var mapping = CreateMemberMapping(sourceProp, targetProp, options, fluentConverters);
             if (mapping != null)
             {
                 propertyMappings.Add(mapping);
@@ -118,6 +144,97 @@ public static class MappingPlanBuilder
 
         return new TypeMappingPlan(sourceType, targetType, propertyMappings, fieldMappings,
             unmappedSource, unmappedTarget);
+    }
+
+    /// <summary>
+    /// 应用 Fluent API 配置覆盖属性注解的映射结果（Pass 3，优先级最高）
+    /// </summary>
+    private static void ApplyFluentOverrides(
+        List<(PropertyInfo Source, PropertyInfo Target)> pairs,
+        Type sourceType,
+        Type targetType,
+        IReadOnlyList<(string TargetPropertyName, MemberMappingActionType ActionType, LambdaExpression? SourceExpression, object? Converter)> fluentActions)
+    {
+        var sourceProps = sourceType.GetProperties()
+            .Where(p => p.CanRead && p.GetIndexParameters().Length == 0)
+            .ToDictionary(p => p.Name, p => p);
+
+        // 先处理 Ignore（移除映射）
+        foreach (var (targetPropName, actionType, _, _) in fluentActions)
+        {
+            if (actionType == MemberMappingActionType.Ignore)
+            {
+                pairs.RemoveAll(p => p.Target.Name == targetPropName);
+            }
+        }
+
+        // 处理 MapFrom 和 ConvertUsing
+        foreach (var (targetPropName, actionType, sourceExpr, converter) in fluentActions)
+        {
+            var targetProp = targetType.GetProperty(targetPropName);
+            if (targetProp == null || !targetProp.CanWrite)
+            {
+                continue;
+            }
+
+            switch (actionType)
+            {
+                case MemberMappingActionType.MapFrom:
+                {
+                    if (sourceExpr?.Body is MemberExpression memberExpr)
+                    {
+                        var sourcePropName = memberExpr.Member.Name;
+                        if (sourceProps.TryGetValue(sourcePropName, out var sourceProp))
+                        {
+                            pairs.RemoveAll(p => p.Target.Name == targetPropName);
+                            pairs.Add((sourceProp, targetProp));
+                        }
+                    }
+
+                    break;
+                }
+                case MemberMappingActionType.ConvertUsing:
+                {
+                    // ConvertUsing 不改变属性配对，只影响 CreateMemberMapping 的策略选择
+                    // 确保目标属性有对应的源属性配对（可能是自动同名匹配的结果）
+                    var existingIdx = pairs.FindIndex(p => p.Target.Name == targetPropName);
+                    if (existingIdx < 0)
+                    {
+                        // 目标属性没有配对，尝试同名匹配
+                        if (sourceProps.TryGetValue(targetPropName, out var sourceProp))
+                        {
+                            pairs.Add((sourceProp, targetProp));
+                        }
+                    }
+
+                    break;
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 从 Fluent 配置构建 ConvertUsing 查找表
+    /// </summary>
+    private static Dictionary<string, object>? BuildFluentConverterLookup(
+        IReadOnlyList<(string TargetPropertyName, MemberMappingActionType ActionType, LambdaExpression? SourceExpression, object? Converter)>? fluentActions)
+    {
+        if (fluentActions == null || fluentActions.Count == 0)
+        {
+            return null;
+        }
+
+        Dictionary<string, object>? lookup = null;
+        foreach (var (targetPropName, actionType, _, converter) in fluentActions)
+        {
+            if (actionType == MemberMappingActionType.ConvertUsing && converter != null)
+            {
+                lookup ??= new Dictionary<string, object>();
+                lookup[targetPropName] = converter;
+            }
+        }
+
+        return lookup;
     }
 
     /// <summary>
@@ -223,10 +340,19 @@ public static class MappingPlanBuilder
     /// 根据源成员和目标成员的类型关系创建映射规则
     /// </summary>
     private static MemberMapping? CreateMemberMapping(MemberInfo sourceMember, MemberInfo targetMember,
-        PlanBuildOptions options)
+        PlanBuildOptions options, Dictionary<string, object>? fluentConverters = null)
     {
         var sourceType = MemberUtils.GetMemberType(sourceMember);
         var targetType = MemberUtils.GetMemberType(targetMember);
+
+        // Fluent API ConvertUsing 优先级最高：直接使用用户指定的转换器
+        if (fluentConverters != null
+            && targetMember.Name != null
+            && fluentConverters.TryGetValue(targetMember.Name, out var customConverter))
+        {
+            return new MemberMapping(sourceMember, targetMember, MappingStrategy.Convert,
+                converter: customConverter);
+        }
 
         // 处理可空类型：获取底层类型进行判断
         var sourceUnderlyingType = TypeUtils.GetUnderlyingType(sourceType);
