@@ -10,6 +10,7 @@ public class MapFromAttribute : Attribute
 
     public MapFromAttribute(string mapFromName)
     {
+        ArgumentException.ThrowIfNullOrEmpty(mapFromName);
         MapFromName = mapFromName;
     }
 }

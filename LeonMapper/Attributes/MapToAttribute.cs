@@ -15,6 +15,7 @@ public class MapToAttribute : Attribute
     /// <param name="mapToName">目标成员名称</param>
     public MapToAttribute(string mapToName)
     {
+        ArgumentException.ThrowIfNullOrEmpty(mapToName);
         this.MapToName = mapToName;
     }
 }

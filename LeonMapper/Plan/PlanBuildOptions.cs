@@ -1,21 +1,43 @@
 namespace LeonMapper.Plan;
 
 /// <summary>
-/// 映射计划构建选项
+/// 映射计划构建选项（不可变）
 /// </summary>
 public class PlanBuildOptions : IEquatable<PlanBuildOptions>
 {
     /// <summary>是否自动转换不同基础类型</summary>
-    public bool AutoConvert { get; set; } = true;
+    public bool AutoConvert { get; }
 
     /// <summary>转换器范围</summary>
-    public ConverterScope ConverterScope { get; set; } = ConverterScope.Common;
+    public ConverterScope ConverterScope { get; }
 
     /// <summary>是否构建嵌套复杂类型的映射计划</summary>
-    public bool BuildNestedPlans { get; set; } = true;
+    public bool BuildNestedPlans { get; }
 
-    /// <summary>默认构建选项（静态只读，避免重复分配）</summary>
-    public static readonly PlanBuildOptions Default = new();
+    /// <summary>
+    /// 默认构建选项
+    /// </summary>
+    public static PlanBuildOptions Default { get; } = new();
+
+    /// <summary>
+    /// 使用默认选项创建
+    /// </summary>
+    public PlanBuildOptions()
+    {
+        AutoConvert = true;
+        ConverterScope = ConverterScope.Common;
+        BuildNestedPlans = true;
+    }
+
+    /// <summary>
+    /// 使用指定选项创建
+    /// </summary>
+    public PlanBuildOptions(bool autoConvert, ConverterScope converterScope, bool buildNestedPlans)
+    {
+        AutoConvert = autoConvert;
+        ConverterScope = converterScope;
+        BuildNestedPlans = buildNestedPlans;
+    }
 
     /// <summary>
     /// 判断两个 PlanBuildOptions 是否相等

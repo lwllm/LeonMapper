@@ -161,6 +161,10 @@ public class FloatToCharConverter : IConverter<float, char>
 {
     public char Convert(float input)
     {
+        if (input < char.MinValue || input > char.MaxValue)
+        {
+            throw new OverflowException();
+        }
         return (char)input;
     }
 }

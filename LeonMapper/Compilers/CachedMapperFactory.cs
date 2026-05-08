@@ -44,6 +44,11 @@ internal static class CachedMapperFactory
     }
 
     /// <summary>
+    /// 当缓存被清空时触发，以便其他缓存层同步清理
+    /// </summary>
+    internal static event Action? OnCacheCleared;
+
+    /// <summary>
     /// 清空所有缓存（用于测试和动态类型场景下的内存回收）
     /// </summary>
     public static void ClearCache()
@@ -51,6 +56,8 @@ internal static class CachedMapperFactory
         _mapperCache.Clear();
         _mapFuncCache.Clear();
         _emptyMapperCache.Clear();
+        Plan.Builder.MappingPlanBuilder.ClearCache();
+        OnCacheCleared?.Invoke();
     }
 
     /// <summary>

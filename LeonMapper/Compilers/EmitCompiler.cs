@@ -90,8 +90,9 @@ public class EmitCompiler<TSource, TTarget> : ICompiler<TSource, TTarget> where 
     {
         var sourceProp = (PropertyInfo)mapping.SourceMember;
         var targetProp = (PropertyInfo)mapping.TargetMember;
-        var getMethod = sourceProp.GetGetMethod(true);
-        var setMethod = targetProp.GetSetMethod(true);
+        var includeNonPublic = MapperConfig.GetMemberVisibility() == Config.MemberVisibility.All;
+        var getMethod = sourceProp.GetGetMethod(includeNonPublic);
+        var setMethod = targetProp.GetSetMethod(includeNonPublic);
 
         if (getMethod == null || setMethod == null)
         {
@@ -449,6 +450,14 @@ public class EmitCompiler<TSource, TTarget> : ICompiler<TSource, TTarget> where 
     {
         if (fromType == toType) return;
 
+        // bool/char 先转为 int，再继续
+        if (fromType == typeof(bool) || fromType == typeof(char))
+        {
+            il.Emit(OpCodes.Conv_I4);
+            fromType = typeof(int);
+            if (fromType == toType) return;
+        }
+
         // 到 long/ulong
         if (toType == typeof(long) || toType == typeof(ulong))
         {
@@ -479,17 +488,26 @@ public class EmitCompiler<TSource, TTarget> : ICompiler<TSource, TTarget> where 
         {
             il.Emit(OpCodes.Conv_R8);
         }
-        // 到 decimal - 需要从其他数值类型构造
+        // 到 decimal - 根据源类型选择合适精度的构造函数
         else if (toType == typeof(decimal))
         {
-            // decimal 没有直接的 IL 转换指令，需要通过构造函数
-            // 假设 fromType 是可以隐式转换为 int 的类型
-            if (fromType != typeof(int))
+            if (fromType == typeof(long) || fromType == typeof(ulong))
             {
-                // 先转换为 int
-                il.Emit(OpCodes.Conv_I4);
+                il.Emit(OpCodes.Conv_I8);
+                il.Emit(OpCodes.Newobj, typeof(decimal).GetConstructor(new[] { typeof(long) })!);
             }
-            il.Emit(OpCodes.Newobj, typeof(decimal).GetConstructor(new[] { typeof(int) })!);
+            else if (fromType == typeof(float) || fromType == typeof(double))
+            {
+                // float/double 先转为 double 再构造 decimal
+                if (fromType == typeof(float)) il.Emit(OpCodes.Conv_R8);
+                il.Emit(OpCodes.Newobj, typeof(decimal).GetConstructor(new[] { typeof(double) })!);
+            }
+            else
+            {
+                // int, short, byte, bool, char 等：通过 int 构造
+                if (fromType != typeof(int)) il.Emit(OpCodes.Conv_I4);
+                il.Emit(OpCodes.Newobj, typeof(decimal).GetConstructor(new[] { typeof(int) })!);
+            }
         }
         // IntPtr/UIntPtr 特殊处理
         else if (toType == typeof(IntPtr))

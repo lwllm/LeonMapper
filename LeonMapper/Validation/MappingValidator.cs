@@ -16,6 +16,8 @@ public static class MappingValidator
     /// <returns>包含错误和警告的验证结果</returns>
     public static ValidationResult Validate(TypeMappingPlan plan)
     {
+        ArgumentNullException.ThrowIfNull(plan);
+
         var errors = new List<string>();
         var warnings = new List<string>();
 

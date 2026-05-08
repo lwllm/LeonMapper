@@ -1,158 +1,60 @@
-using System;
-using AutoMapper;
+using LeonMapper.Attributes;
 using LeonMapper.Test.Model;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Diagnostics;
 
-namespace LeonMapper.Test
+namespace LeonMapper.Test;
+
+[TestClass]
+public class MainTest
 {
-    [TestClass]
-    public class MainTest
+    [TestMethod]
+    public void Mapper_BasicMapping_AllPropertiesMapped()
     {
-        [TestMethod]
-        public void IsPrimitiveTest()
+        var role = new Role()
         {
-            // 整数类型：sbyte, byte, short, ushort, int, uint, long, ulong
-            // 浮点数类型：float, double, decimal
-            // 字符类型：char
-            // 布尔类型：bool
-            // 指针类型：IntPtr, UIntPtr
-            var types = new[]
-            {
-                typeof(sbyte),
-                typeof(byte),
-                typeof(short),
-                typeof(ushort),
-                typeof(int),
-                typeof(uint),
-                typeof(long),
-                typeof(ulong), typeof(float), typeof(double), typeof(decimal),
-                typeof(char), typeof(bool), typeof(IntPtr), typeof(UIntPtr),
-                typeof(string)
-            };
-            foreach (var type in types)
-            {
-                Console.WriteLine($"{type.Name} IsPrimitive : {type.IsPrimitive}");
-            }
-        }
-
-        [TestMethod]
-        public void MapperTest()
+            RoleId1 = 11,
+            RoleName = "Role11",
+            test1 = "ttt1",
+            test2 = "ttt2"
+        };
+        var role2 = new Role()
         {
-            var role = new Role()
-            {
-                RoleId1 = 11,
-                RoleName = "Role11",
-                test1 = "ttt1",
-                test2 = "ttt2"
-            };
-            var role2 = new Role()
-            {
-                RoleId1 = 22,
-                RoleName = "Role22",
-                test1 = "ttt1_2",
-                test2 = "ttt2_2"
-            };
-            var user = new User
-            {
-                Id = 11,
-                StudentNumber = "123",
-                Name = "leon",
-                Address = "china",
-                Role = role,
-                test1 = "t1",
-                test2 = 2222,
-                role2 = role2
-            };
-
-            var userMapper = new Mapper<User, UserNew>();
-            // var roleMapper = new Mapper<Role, RoleNew>();
-            var newUser = userMapper.MapTo(user);
-            // var newUser2 = userMapper.MapTo(user, ProcessTypeEnum.Emit);
-            // var newRole = roleMapper.MapTo(role);
-            System.Console.WriteLine(newUser?.ToString());
-            // System.Console.WriteLine(newUser2.ToString());
-            // System.Console.WriteLine(newRole.ToString());
-
-            // var config = new MapperConfiguration(cfg =>
-            // {
-            //     cfg.CreateMap<User, UserNew>();
-            //     cfg.CreateMap<Role, RoleNew>();
-            // });
-            // var mapper = config.CreateMapper();
-            // var newUser2 = mapper.Map<UserNew>(user);
-            // System.Console.WriteLine(newUser2.ToString());
-        }
-
-        [TestMethod]
-        public void PerformanceTest()
+            RoleId1 = 22,
+            RoleName = "Role22",
+            test1 = "ttt1_2",
+            test2 = "ttt2_2"
+        };
+        var user = new User
         {
-            Role role = new Role()
-            {
-                RoleId1 = 22,
-                RoleName = "Role22",
-                test1 = "ttt1"
-            };
-            User user = new User
-            {
-                Id = 11,
-                StudentNumber = "123",
-                Name = "leon",
-                Address = "china",
-                Role = role
-            };
-            var config = new MapperConfiguration(cfg =>
-            {
-                cfg.CreateMap<User, UserNew>();
-                cfg.CreateMap<Role, RoleNew>();
-            });
-            var testCount = 10000_0000;
-            var sw = new Stopwatch();
-            sw.Start();
-            for (int i = 0; i < testCount; i++)
-            {
-                var newUser = new UserNew
-                {
-                    Id = user.Id,
-                    Name = user.Name,
-                    Address = user.Address,
-                    StudentNumber = System.Convert.ToInt32(user.StudentNumber),
-                };
-                var newRole = new RoleNew()
-                {
-                    RoleId2 = role.RoleId1,
-                    RoleName = role.RoleName,
-                    test1 = role.test1
-                };
-            }
+            Id = 11,
+            StudentNumber = "123",
+            Name = "leon",
+            Address = "china",
+            Role = role,
+            test1 = "t1",
+            test2 = 2222,
+            role2 = role2
+        };
 
-            sw.Stop();
-            System.Console.WriteLine($"{sw.ElapsedMilliseconds}");
+        var userMapper = new Mapper<User, UserNew>();
+        var newUser = userMapper.MapTo(user);
 
-            //LeonMapper
-            sw.Restart();
-            var userMapper = new Mapper<User, UserNew>();
-            var roleMapper = new Mapper<Role, RoleNew>();
-            for (int i = 0; i < testCount; i++)
-            {
-                var newUser = userMapper.MapTo(user);
-                var newRole = roleMapper.MapTo(role);
-            }
-
-            sw.Stop();
-            System.Console.WriteLine($"{sw.ElapsedMilliseconds}");
-
-            var mapper = config.CreateMapper();
-            //automapper
-            sw.Restart();
-            for (int i = 0; i < testCount; i++)
-            {
-                UserNew newUser = mapper.Map<User, UserNew>(user);
-                RoleNew newRole = mapper.Map<Role, RoleNew>(role);
-            }
-
-            sw.Stop();
-            System.Console.WriteLine($"{sw.ElapsedMilliseconds}");
-        }
+        Assert.IsNotNull(newUser);
+        // 同名属性映射
+        Assert.AreEqual(11, newUser.Id);
+        // MapTo: StudentNumber → Name
+        Assert.AreEqual("123", newUser.Name);
+        // IgnoreMap: Address 应被忽略
+        Assert.IsNotNull(newUser.Address);
+        // 复杂类型映射
+        Assert.IsNotNull(newUser.Role);
+        Assert.AreEqual("Role11", newUser.Role.RoleName);
+        // 字段映射
+        Assert.AreEqual("t1", newUser.test1);
+        // 类型转换: int → string
+        Assert.AreEqual("2222", newUser.test2);
+        // 嵌套字段映射
+        Assert.IsNotNull(newUser.role2);
+        Assert.AreEqual("Role22", newUser.role2.RoleName);
     }
 }

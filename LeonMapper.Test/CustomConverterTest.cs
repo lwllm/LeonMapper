@@ -153,11 +153,7 @@ public class CustomConverterTest
             Number = 100
         };
 
-        var options = new PlanBuildOptions
-        {
-            ConverterScope = ConverterScope.Common,
-            AutoConvert = true
-        };
+        var options = new PlanBuildOptions(autoConvert: true, converterScope: ConverterScope.Common, buildNestedPlans: true);
 
         var plan = LeonMapper.Plan.Builder.MappingPlanBuilder.Build<IntToStringSource, IntToStringTarget>(options);
 
@@ -173,11 +169,7 @@ public class CustomConverterTest
             Number = 100
         };
 
-        var options = new PlanBuildOptions
-        {
-            ConverterScope = ConverterScope.All,
-            AutoConvert = true
-        };
+        var options = new PlanBuildOptions(autoConvert: true, converterScope: ConverterScope.All, buildNestedPlans: true);
 
         var plan = LeonMapper.Plan.Builder.MappingPlanBuilder.Build<IntToStringSource, IntToStringTarget>(options);
 

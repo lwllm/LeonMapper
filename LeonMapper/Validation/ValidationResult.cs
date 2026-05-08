@@ -21,8 +21,8 @@ public class ValidationResult
     /// </summary>
     public ValidationResult(IReadOnlyList<string> errors, IReadOnlyList<string> warnings)
     {
-        Errors = errors;
-        Warnings = warnings;
+        Errors = errors ?? Array.Empty<string>();
+        Warnings = warnings ?? Array.Empty<string>();
     }
 
     /// <summary>

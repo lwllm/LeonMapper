@@ -30,6 +30,7 @@ public class Mapper<TSource, TDestination> where TDestination : class
     /// </summary>
     public Mapper(TypeMappingPlan plan)
     {
+        ArgumentNullException.ThrowIfNull(plan);
         _compiler = CreateCompiler(plan);
     }
 
@@ -48,6 +49,7 @@ public class Mapper<TSource, TDestination> where TDestination : class
     /// <param name="configure">Fluent API 配置委托</param>
     public Mapper(Action<MappingConfiguration<TSource, TDestination>> configure)
     {
+        ArgumentNullException.ThrowIfNull(configure);
         var config = new MappingConfiguration<TSource, TDestination>();
         configure(config);
         var plan = MappingPlanBuilder.Build(config);
@@ -61,6 +63,7 @@ public class Mapper<TSource, TDestination> where TDestination : class
     {
         if (!MappingDepthTracker.TryIncrement())
         {
+            MappingDepthTracker.NotifyOverflow(typeof(TSource), typeof(TDestination));
             return default;
         }
 

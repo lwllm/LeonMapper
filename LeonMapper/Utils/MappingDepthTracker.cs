@@ -1,3 +1,5 @@
+using System;
+
 namespace LeonMapper.Utils;
 
 /// <summary>
@@ -8,6 +10,11 @@ internal static class MappingDepthTracker
 {
     private static readonly AsyncLocal<int> _depth = new();
     private static volatile int _maxDepth = 100;
+
+    /// <summary>
+    /// 当映射深度超出限制时触发（可用于日志记录）
+    /// </summary>
+    internal static event Action<Type, Type, int>? OnDepthOverflow;
 
     /// <summary>
     /// 设置最大映射深度。超出此深度时 MapTo 将返回 default。
@@ -53,5 +60,13 @@ internal static class MappingDepthTracker
     public static void Reset()
     {
         _depth.Value = 0;
+    }
+
+    /// <summary>
+    /// 触发深度溢出事件（由 Mapper.MapTo 在返回 default 前调用）
+    /// </summary>
+    internal static void NotifyOverflow(Type sourceType, Type targetType)
+    {
+        OnDepthOverflow?.Invoke(sourceType, targetType, _maxDepth);
     }
 }

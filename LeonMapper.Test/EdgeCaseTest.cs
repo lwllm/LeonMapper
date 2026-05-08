@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using LeonMapper.Attributes;
 using LeonMapper.Config;
 using LeonMapper.Test.Model;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -958,6 +959,95 @@ public class EdgeCaseTest
             Assert.IsNotNull(result);
             Assert.AreEqual(i, result.Id);
         }
+    }
+
+    #endregion
+
+    #region IgnoreMap Attribute Tests
+
+    public class IgnoreMapSource
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+
+        [IgnoreMap]
+        public string Secret { get; set; } = "shouldNotMap";
+    }
+
+    public class IgnoreMapTarget
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Secret { get; set; } = "default";
+    }
+
+    [TestMethod]
+    public void IgnoreMapAttribute_Expression_SkipsMarkedProperty()
+    {
+        var source = new IgnoreMapSource { Id = 1, Name = "test", Secret = "hidden" };
+
+        var mapper = new Mapper<IgnoreMapSource, IgnoreMapTarget>(ProcessTypeEnum.Expression);
+        var result = mapper.MapTo(source);
+
+        Assert.IsNotNull(result);
+        Assert.AreEqual(1, result.Id);
+        Assert.AreEqual("test", result.Name);
+        // Secret 标记了 [IgnoreMap]，目标应保留默认值
+        Assert.AreEqual("default", result.Secret);
+    }
+
+    [TestMethod]
+    public void IgnoreMapAttribute_Emit_SkipsMarkedProperty()
+    {
+        var source = new IgnoreMapSource { Id = 2, Name = "emit", Secret = "hidden" };
+
+        var mapper = new Mapper<IgnoreMapSource, IgnoreMapTarget>(ProcessTypeEnum.Emit);
+        var result = mapper.MapTo(source);
+
+        Assert.IsNotNull(result);
+        Assert.AreEqual(2, result.Id);
+        Assert.AreEqual("emit", result.Name);
+        Assert.AreEqual("default", result.Secret);
+    }
+
+    #endregion
+
+    #region StringToEnum Edge Cases
+
+    public enum TestEnum { ValueA, ValueB, ValueC }
+
+    public class StringToEnumSource
+    {
+        public string Value { get; set; } = string.Empty;
+    }
+
+    public class StringToEnumTarget
+    {
+        public TestEnum Value { get; set; }
+    }
+
+    [TestMethod]
+    public void StringToEnum_InvalidName_ReturnsDefault()
+    {
+        var source = new StringToEnumSource { Value = "NonExistentValue" };
+
+        var mapper = new Mapper<StringToEnumSource, StringToEnumTarget>(ProcessTypeEnum.Expression);
+        var result = mapper.MapTo(source);
+
+        Assert.IsNotNull(result);
+        Assert.AreEqual(TestEnum.ValueA, result.Value); // 无效名称返回 default(0)
+    }
+
+    [TestMethod]
+    public void StringToEnum_NumericString_MapsByNumber()
+    {
+        var source = new StringToEnumSource { Value = "1" };
+
+        var mapper = new Mapper<StringToEnumSource, StringToEnumTarget>(ProcessTypeEnum.Expression);
+        var result = mapper.MapTo(source);
+
+        Assert.IsNotNull(result);
+        Assert.AreEqual(TestEnum.ValueB, result.Value);
     }
 
     #endregion

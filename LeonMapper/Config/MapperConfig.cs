@@ -23,6 +23,7 @@ public class MapperConfig
     private static volatile ProcessTypeEnum _defaultProcessType = ProcessTypeEnum.Expression;
     private static volatile ConverterScope _defaultConverterScope = ConverterScope.Common;
     private static volatile bool _autoConverter = true;
+    private static volatile MemberVisibility _memberVisibility = MemberVisibility.Public;
 
     // 用于更细粒度配置的线程安全字典（未来扩展用）
     private static readonly ConcurrentDictionary<string, object?> _customSettings = new();
@@ -81,6 +82,28 @@ public class MapperConfig
         {
             _autoConverter = autoConvert;
         }
+    }
+
+    /// <summary>
+    /// 设置映射器可访问的成员可见性级别。
+    /// Public = 仅公共成员（默认，推荐生产环境）；
+    /// PublicAndInternal = 包含 internal 成员；
+    /// All = 包含 private 成员。
+    /// </summary>
+    public static void SetMemberVisibility(MemberVisibility visibility)
+    {
+        lock (_configLock)
+        {
+            _memberVisibility = visibility;
+        }
+    }
+
+    /// <summary>
+    /// 获取当前成员可见性级别
+    /// </summary>
+    public static MemberVisibility GetMemberVisibility()
+    {
+        return _memberVisibility;
     }
 
     /// <summary>

@@ -1,4 +1,5 @@
-﻿using LeonMapper.Convert.Attributes;
+﻿using System.Globalization;
+using LeonMapper.Convert.Attributes;
 
 namespace LeonMapper.Convert.Converters;
 
@@ -10,7 +11,7 @@ public class StringToIntConverter : IConverter<string, int>
 {
     public int Convert(string input)
     {
-        return int.Parse(input);
+        return int.Parse(input, CultureInfo.InvariantCulture);
     }
 }
 
@@ -21,7 +22,7 @@ public class StringToUintConverter : IConverter<string, uint>
 {
     public uint Convert(string input)
     {
-        return uint.Parse(input);
+        return uint.Parse(input, NumberStyles.Integer, CultureInfo.InvariantCulture);
     }
 }
 
@@ -33,7 +34,7 @@ public class StringToShortConverter : IConverter<string, short>
 {
     public short Convert(string input)
     {
-        return short.Parse(input);
+        return short.Parse(input, CultureInfo.InvariantCulture);
     }
 }
 
@@ -44,7 +45,7 @@ public class StringToUshortConverter : IConverter<string, ushort>
 {
     public ushort Convert(string input)
     {
-        return ushort.Parse(input);
+        return ushort.Parse(input, CultureInfo.InvariantCulture);
     }
 }
 
@@ -56,7 +57,7 @@ public class StringToLongConverter : IConverter<string, long>
 {
     public long Convert(string input)
     {
-        return long.Parse(input);
+        return long.Parse(input, CultureInfo.InvariantCulture);
     }
 }
 
@@ -67,7 +68,7 @@ public class StringToUlongConverter : IConverter<string, ulong>
 {
     public ulong Convert(string input)
     {
-        return ulong.Parse(input);
+        return ulong.Parse(input, CultureInfo.InvariantCulture);
     }
 }
 
@@ -79,7 +80,7 @@ public class StringToDoubleConverter : IConverter<string, double>
 {
     public double Convert(string input)
     {
-        return double.Parse(input);
+        return double.Parse(input, CultureInfo.InvariantCulture);
     }
 }
 
@@ -90,7 +91,7 @@ public class StringToFloatConverter : IConverter<string, float>
 {
     public float Convert(string input)
     {
-        return float.Parse(input);
+        return float.Parse(input, CultureInfo.InvariantCulture);
     }
 }
 
@@ -102,7 +103,7 @@ public class StringToDecimalConverter : IConverter<string, decimal>
 {
     public decimal Convert(string input)
     {
-        return decimal.Parse(input);
+        return decimal.Parse(input, CultureInfo.InvariantCulture);
     }
 }
 
@@ -114,7 +115,7 @@ public class StringToDateTimeConverter : IConverter<string, DateTime>
 {
     public DateTime Convert(string input)
     {
-        return DateTime.Parse(input);
+        return DateTime.Parse(input, CultureInfo.InvariantCulture);
     }
 }
 
@@ -133,7 +134,7 @@ public class StringToSbyteConverter : IConverter<string, sbyte>
 {
     public sbyte Convert(string input)
     {
-        return sbyte.Parse(input);
+        return sbyte.Parse(input, CultureInfo.InvariantCulture);
     }
 }
 
@@ -144,7 +145,7 @@ public class StringToByteConverter : IConverter<string, byte>
 {
     public byte Convert(string input)
     {
-        return byte.Parse(input);
+        return byte.Parse(input, CultureInfo.InvariantCulture);
     }
 }
 
@@ -178,7 +179,7 @@ public class StringToIntPtrConverter : IConverter<string, IntPtr>
 {
     public IntPtr Convert(string input)
     {
-        return IntPtr.Parse(input);
+        return IntPtr.Parse(input, CultureInfo.InvariantCulture);
     }
 }
 
@@ -189,6 +190,6 @@ public class StringToUIntPtrConverter : IConverter<string, UIntPtr>
 {
     public UIntPtr Convert(string input)
     {
-        return UIntPtr.Parse(input);
+        return UIntPtr.Parse(input, CultureInfo.InvariantCulture);
     }
 }

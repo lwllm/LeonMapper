@@ -1,203 +1,244 @@
 # LeonMapper
 
-一个高性能的 C# 对象映射库，通过编译期生成映射代码实现接近手写映射的性能。类似 AutoMapper，但更轻量、更快速。
+[![NuGet](https://img.shields.io/nuget/v/LeonMapper)](https://www.nuget.org/packages/LeonMapper/)
+[![License](https://img.shields.io/github/license/luowuliang/LeonMapper)](LICENSE)
 
-## 特性
-
-- **双引擎实现** — 提供 Expression Tree（表达式树）和 Reflection.Emit（IL 生成）两套映射引擎
-- **零依赖** — 纯 .NET BCL 实现，无任何第三方依赖
-- **高性能** — 编译期生成映射代码，性能接近手写赋值
-- **类型自动转换** — 内置所有 C# 基元类型之间的转换器
-- **嵌套对象映射** — 自动递归处理复杂类型属性
-- **属性注解控制** — 通过注解灵活控制映射行为（重命名、忽略等）
-- **字段映射** — 支持公共字段的映射
+一个高性能的 C# 对象映射库，通过编译期生成映射代码实现接近手写映射的性能。零依赖、双引擎、完整功能覆盖。
 
 ## 安装
 
-将 `LeonMapper` 项目引用添加到你的 `.csproj` 中：
-
-```xml
-<ProjectReference Include="..\LeonMapper\LeonMapper.csproj" />
+```bash
+dotnet add package LeonMapper
 ```
 
 ## 快速开始
-
-### 基础映射
 
 同名属性自动映射：
 
 ```csharp
 using LeonMapper;
 
-public class User
-{
-    public int Id { get; set; }
-    public string Name { get; set; }
-    public string Address { get; set; }
-}
-
-public class UserDto
-{
-    public int Id { get; set; }
-    public string Name { get; set; }
-    public string Address { get; set; }
-}
-
-// 使用
 var mapper = new Mapper<User, UserDto>();
 var dto = mapper.MapTo(user);
 ```
 
+## 特性
+
+- **双引擎** — Expression Tree 和 Reflection.Emit 两套引擎，功能完全一致
+- **零依赖** — 纯 .NET BCL，无任何第三方依赖
+- **高性能** — 4/4 测试场景超越 AutoMapper
+- **类型自动转换** — 内置所有 C# 基元类型互转，默认 `CultureInfo.InvariantCulture`
+- **嵌套对象映射** — 自动递归处理复杂类型属性，支持 3 层以上深度
+- **集合映射** — `List<T>`、数组、`IEnumerable<T>` 之间的互转
+- **字典映射** — `Dictionary<K,V>` 之间 Key/Value 类型转换
+- **枚举映射** — 枚举 ↔ 枚举、枚举 ↔ 基元类型互转
+- **可空类型** — `int?` ↔ `long?`、`int?` ↔ `int` 等全组合
+- **循环引用保护** — 三层防护，默认最大深度 100，可配置
+- **Fluent API** — `ForMember().MapFrom()`、`Ignore()`、`ConvertUsing<T>()`
+- **属性注解** — `[MapTo]`、`[MapFrom]`、`[IgnoreMap]` 等控制映射行为
+- **非泛型 API** — `IMapper` 接口 + `MapperService`，支持 DI 注入
+- **字段映射** — 公共字段自动映射
+
+## 详细文档
+
+### 基础映射
+
+```csharp
+var mapper = new Mapper<User, UserDto>();
+var dto = mapper.MapTo(user);
+```
+
+### 指定引擎
+
+```csharp
+// Expression 引擎（默认）
+var mapper = new Mapper<User, UserDto>(ProcessTypeEnum.Expression);
+
+// Emit 引擎
+var emitMapper = new Mapper<User, UserDto>(ProcessTypeEnum.Emit);
+```
+
 ### 嵌套对象映射
 
-复杂类型属性自动递归映射：
+复杂类型属性自动递归映射，支持多层深度：
 
 ```csharp
-public class User
+public class Order
 {
     public int Id { get; set; }
-    public Role Role { get; set; }
+    public Customer Customer { get; set; }  // 自动映射为 CustomerDto
+    public List<OrderItem> Items { get; set; }  // 自动映射为 List<OrderItemDto>
 }
 
-public class UserDto
-{
-    public int Id { get; set; }
-    public RoleDto Role { get; set; }
-}
-
-var mapper = new Mapper<User, UserDto>();
-var dto = mapper.MapTo(user); // Role 也会被自动映射为 RoleDto
+var mapper = new Mapper<Order, OrderDto>();
+var dto = mapper.MapTo(order);
 ```
 
-### 不同类型自动转换
+### 集合映射
 
-不同基元类型之间自动转换：
+`List<T>`、数组、`IEnumerable<T>` 之间的任意组合映射：
 
 ```csharp
-public class User
-{
-    public string StudentNumber { get; set; }  // string
-}
-
-public class UserDto
-{
-    public int StudentNumber { get; set; }     // int，自动转换
-}
+var source = new List<User> { ... };
+var mapper = new Mapper<List<User>, List<UserDto>>();
+var result = mapper.MapTo(source);  // 所有元素自动映射
 ```
 
-## 属性注解
-
-### `[MapTo]` — 源属性映射到不同名称的目标属性
-
-支持一对多映射（`AllowMultiple = true`）：
+### 字典映射
 
 ```csharp
-public class User
-{
-    [MapTo(nameof(UserDto.Name))]
-    public string StudentNumber { get; set; }
-}
+public class Source { public string Name { get; set; } }
+public class Target { public string Name { get; set; } }
 
-public class UserDto
+var source = new Dictionary<int, Source> { { 1, new Source { Name = "A" } } };
+var mapper = new Mapper<Dictionary<int, Source>, Dictionary<long, Target>>();
+var result = mapper.MapTo(source);  // Key 和 Value 自动转换
+```
+
+### 属性注解
+
+| 注解 | 作用 | 使用位置 |
+|------|------|---------|
+| `[MapTo("TargetProp")]` | 源映射到不同名称的目标 | 源属性 |
+| `[MapFrom("SourceProp")]` | 目标从不同名称的源拉取（优先于 MapTo） | 目标属性 |
+| `[IgnoreMap]` | 完全忽略映射 | 源或目标属性 |
+| `[IgnoreMapTo]` | 源禁止映射到目标 | 源属性 |
+| `[IgnoreMapFrom]` | 目标禁止接收映射 | 目标属性 |
+
+```csharp
+public class Employee
 {
+    [MapTo(nameof(EmployeeDto.DisplayName))]
     public string Name { get; set; }
-}
-```
 
-### `[MapFrom]` — 目标属性从不同名称的源属性拉取
-
-优先级高于 `[MapTo]`：
-
-```csharp
-public class User
-{
-    public string FullName { get; set; }
-}
-
-public class UserDto
-{
-    [MapFrom("FullName")]
-    public string DisplayName { get; set; }
-}
-```
-
-### `[IgnoreMap]` — 完全忽略映射
-
-标注在源或目标属性上均可：
-
-```csharp
-public class User
-{
-    public int Id { get; set; }
     [IgnoreMap]
-    public string Password { get; set; }  // 不会被映射
+    public string Password { get; set; }
+}
+
+public class EmployeeDto
+{
+    public string DisplayName { get; set; }
+    public string Password { get; set; }  // 不会被映射，保持默认值
 }
 ```
 
-### `[IgnoreMapTo]` — 源属性禁止映射到目标
-
-仅标注在源属性上：
+### Fluent API
 
 ```csharp
-public class User
+var mapper = new Mapper<Employee, EmployeeDto>(cfg =>
 {
-    [IgnoreMapTo]
-    public string InternalId { get; set; }  // 不会映射到任何目标属性
-}
+    cfg.ForMember(dest => dest.DisplayName, opt =>
+    {
+        opt.MapFrom(src => src.FullName);
+    });
+
+    cfg.ForMember(dest => dest.CalculatedField, opt =>
+    {
+        opt.Ignore();
+    });
+
+    cfg.ForMember(dest => dest.FormattedValue, opt =>
+    {
+        opt.ConvertUsing<IntToStringConverter>();
+    });
+});
 ```
 
-### `[IgnoreMapFrom]` — 目标属性禁止接收映射
-
-仅标注在目标属性上：
+### DI 注入（非泛型 API）
 
 ```csharp
-public class UserDto
+// 注册
+services.AddSingleton<IMapper, MapperService>();
+
+// 使用
+public class UserService
 {
-    [IgnoreMapFrom]
-    public string ComputedField { get; set; }  // 不会从任何源属性接收值
+    private readonly IMapper _mapper;
+
+    public UserService(IMapper mapper)
+    {
+        _mapper = mapper;
+    }
+
+    public UserDto GetUser(int id)
+    {
+        var user = _repository.GetUser(id);
+        return _mapper.Map<UserDto>(user);
+    }
 }
 ```
 
-## 配置
-
-通过 `MapperConfig` 静态类进行全局配置：
+### 全局配置
 
 ```csharp
 using LeonMapper.Config;
 
-// 设置默认引擎（默认 Expression）
+// 编译引擎（默认 Expression）
 MapperConfig.SetDefaultProcessType(ProcessTypeEnum.Emit);
 
-// 设置转换器范围（默认 Common）
+// 转换器范围（默认 Common）
 MapperConfig.SetConverterScope(ConverterScope.All);
 
-// 设置是否自动转换不同类型（默认 true）
-MapperConfig.SetAutoConvert(false);
+// 自动类型转换（默认 true）
+MapperConfig.SetAutoConvert(true);
+
+// 最大递归深度（默认 100，防循环引用）
+MapperConfig.SetMaxDepth(50);
+
+// 成员可见性（默认 Public，设为 All 可映射私有成员）
+MapperConfig.SetMemberVisibility(MemberVisibility.Public);
 ```
 
-### 引擎选择
-
-| 引擎 | 说明 | 状态 |
-|------|------|------|
-| `ProcessTypeEnum.Expression` | 表达式树编译，功能完整 | 已完成（默认） |
-| `ProcessTypeEnum.Emit` | IL 动态生成，功能完整 | 已完成 |
-
-也可以在每次调用时指定引擎：
+### 验证映射配置
 
 ```csharp
-// 使用默认引擎（全局配置）
-var mapper = new Mapper<User, UserDto>();
-var result = mapper.MapTo(user);
-
-// 指定使用 Emit 引擎
-var emitMapper = new Mapper<User, UserDto>(ProcessTypeEnum.Emit);
-var result2 = emitMapper.MapTo(user);
+var validation = Mapper<User, UserDto>.Validate();
+if (!validation.IsValid)
+    Console.WriteLine(validation.GetReport());
 ```
 
-### 转换器范围
+### 查看映射计划
 
-- `ConverterScope.Common` — 仅使用标记为 `[CommonConverter]` 的常用转换器
-- `ConverterScope.All` — 使用所有可用的转换器（包括可能有精度损失或溢出的转换）
+```csharp
+var plan = Mapper<User, UserDto>.GetPlan();
+Console.WriteLine(plan);
+```
+
+## 性能
+
+以下为 AutoMapper 16.1.1 与 LeonMapper 的 Benchmark 对比（.NET 8.0, AMD Ryzen 9 9950X3D）：
+
+| 场景 | LeonMapper Expression | LeonMapper Emit | AutoMapper |
+|------|---------------------:|----------------:|-----------:|
+| 简单对象 (5属性) | **5.3 ns** | **5.5 ns** | 39.5 ns |
+| 嵌套对象 (含地址) | **22.7 ns** | **27.7 ns** | 49.8 ns |
+| 集合映射 (10元素) | **137.3 ns** | **156.0 ns** | 150.6 ns |
+| 类型转换 (int↔string) | **69.6 ns** | **83.1 ns** | 106.2 ns |
+
+LeonMapper 在全部 4 个基准场景中优于 AutoMapper，简单对象场景快 7-8 倍。
+
+## 循环引用保护
+
+当对象图存在循环引用（如 `Employee.Manager` 指向自身）时，默认最大深度为 100 层，超出返回 `null`。可通过 `MapperConfig.SetMaxDepth()` 调整或监听 `MappingDepthTracker.OnDepthOverflow` 事件记录日志。
+
+## 注意事项
+
+- 目标类型必须有公共无参构造函数（`where TDestination : class`）
+- 默认仅映射公共属性/字段，可通过 `MemberVisibility.All` 启用私有成员映射
+- 映射器实例是线程安全的，可全局共享
+- 计划缓存和映射器缓存仅在进程内有效，可通过 `CachedMapperFactory.ClearCache()` 清理
+
+## Benchmark
+
+```bash
+dotnet run --project LeonMapper.Benchmarks/LeonMapper.Benchmarks.csproj -c Release
+```
+
+## 测试
+
+```bash
+dotnet test LeonMapper.Test/LeonMapper.Test.csproj
+```
 
 ## License
 

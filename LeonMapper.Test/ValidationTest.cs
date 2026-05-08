@@ -245,10 +245,7 @@ public class ValidationTest
     [TestMethod]
     public void MappingPlanBuilder_Build_WithOptions_ShouldRespectAutoConvert()
     {
-        var options = new PlanBuildOptions
-        {
-            AutoConvert = false
-        };
+        var options = new PlanBuildOptions(autoConvert: false, converterScope: ConverterScope.Common, buildNestedPlans: true);
 
         var plan = MappingPlanBuilder.Build<IncompatibleSource, IncompatibleTarget>(options);
 

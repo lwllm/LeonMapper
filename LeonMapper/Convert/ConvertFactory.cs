@@ -61,35 +61,6 @@ public class ConvertFactory
     }
 
     /// <summary>
-    /// 获取基础类型转换器（泛型版本），根据全局配置的 ConverterScope 决定查找范围
-    /// </summary>
-    /// <typeparam name="TInput">源类型</typeparam>
-    /// <typeparam name="TOutput">目标类型</typeparam>
-    /// <returns>转换器实例，未找到时返回 null</returns>
-    [Obsolete("该方法在当前架构中未被使用，请使用 GetConverter 方法替代")]
-    public static IConverter<TInput, TOutput>? GetTheBaseTypeConverter<TInput, TOutput>()
-    {
-        var key = (typeof(TInput), typeof(TOutput));
-        if (MapperConfig.GetDefaultConverterScope() == ConverterScope.Common)
-        {
-            if (_commonConverterDictionary.TryGetValue(key, out var conv))
-            {
-                return (IConverter<TInput, TOutput>)conv;
-            }
-
-            return default;
-        }
-
-        // AllConverters 模式：从全量字典中查找
-        if (_allConverterDictionary.TryGetValue(key, out var conv2))
-        {
-            return (IConverter<TInput, TOutput>)conv2;
-        }
-
-        return default;
-    }
-
-    /// <summary>
     /// 根据类型获取转换器（Plan 层使用）
     /// </summary>
     /// <param name="inputType">源类型</param>

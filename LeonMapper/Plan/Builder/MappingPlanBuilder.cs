@@ -13,7 +13,7 @@ namespace LeonMapper.Plan.Builder;
 /// </summary>
 public static class MappingPlanBuilder
 {
-    private static readonly ConcurrentDictionary<(Type, Type, int, int), TypeMappingPlan> _planCache = new();
+    private static readonly ConcurrentDictionary<(Type Source, Type Target, PlanBuildOptions? Options, int ConfigHash), TypeMappingPlan> _planCache = new();
     private static readonly ConcurrentDictionary<(Type, Type), TypeMappingPlan> _emptyPlanCache = new();
 
     // 追踪当前正在构建的计划类型对，防止自引用类型在计划构建阶段无限递归
@@ -22,6 +22,15 @@ public static class MappingPlanBuilder
 
     private static readonly MemberMapping[] s_emptyMappings = Array.Empty<MemberMapping>();
     private static readonly MemberInfo[] s_emptyMembers = Array.Empty<MemberInfo>();
+
+    /// <summary>
+    /// 清空计划缓存（用于测试和动态类型场景的内存回收）
+    /// </summary>
+    public static void ClearCache()
+    {
+        _planCache.Clear();
+        _emptyPlanCache.Clear();
+    }
 
     /// <summary>
     /// 构建映射计划（泛型入口）
@@ -40,7 +49,7 @@ public static class MappingPlanBuilder
     {
         options ??= PlanBuildOptions.Default;
         var configHash = config?.GetConfigHash() ?? 0;
-        var cacheKey = (typeof(TSource), typeof(TTarget), options.GetHashCode(), configHash);
+        var cacheKey = (typeof(TSource), typeof(TTarget), options, configHash);
 
         var fluentActions = config?.GetMemberActions()
             .Select(x => (x.TargetPropertyName, x.Option.ActionType, x.Option.SourceExpression, x.Option.Converter))
@@ -57,7 +66,7 @@ public static class MappingPlanBuilder
     public static TypeMappingPlan Build(Type sourceType, Type targetType, PlanBuildOptions? options = null)
     {
         options ??= PlanBuildOptions.Default;
-        var cacheKey = (sourceType, targetType, options.GetHashCode(), 0);
+        var cacheKey = (sourceType, targetType, options, 0);
 
         // 检测循环引用：如果该类型对正在当前线程的构建栈中，返回空计划
         if (!_buildingTypes.Value!.Add((sourceType, targetType)))

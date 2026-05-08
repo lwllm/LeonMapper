@@ -48,19 +48,23 @@ public class ExpressionCompiler<TSource, TTarget> : ICompiler<TSource, TTarget> 
         // 检查是否为纯集合类型映射（如 List<T> -> List<TNew>）
         var sourceElementType = TypeUtils.GetCollectionElementType(plan.SourceType);
         var targetElementType = TypeUtils.GetCollectionElementType(plan.TargetType);
-        // 过滤掉集合类型特有的属性（如 Capacity, Count 等）
-        var meaningfulProps = plan.PropertyMappings
-            .Where(m => m.SourceMember.Name != "Capacity")
-            .ToList();
-        if (sourceElementType != null && targetElementType != null
-            && meaningfulProps.Count == 0 && plan.FieldMappings.Count == 0)
+        // 纯集合映射时，只有源和目标都是集合且没有用户定义的映射属性
+        // 集合自身的基础属性（Capacity 等）需要被排除
+        if (sourceElementType != null && targetElementType != null)
         {
-            // 纯集合映射：直接生成 Select(...).ToList()/ToArray() 表达式
-            var collectionExpr = BuildInlineCollectionMapping(
-                sourceParam, plan.SourceType, plan.TargetType,
-                sourceElementType, targetElementType);
-            var lambda = Expression.Lambda<Func<TSource, TTarget?>>(collectionExpr, sourceParam);
-            return lambda.Compile();
+            // 检查是否存在非集合基础设施的属性映射
+            var hasUserDefinedProps = plan.PropertyMappings
+                .Any(m => m.SourceMember.Name != "Capacity"
+                          && m.SourceMember.Name != "Count"
+                          && m.SourceMember.Name != "Item");
+            if (!hasUserDefinedProps && plan.FieldMappings.Count == 0)
+            {
+                var collectionExpr = BuildInlineCollectionMapping(
+                    sourceParam, plan.SourceType, plan.TargetType,
+                    sourceElementType, targetElementType);
+                var lambda = Expression.Lambda<Func<TSource, TTarget?>>(collectionExpr, sourceParam);
+                return lambda.Compile();
+            }
         }
 
         if (plan.TargetType.GetConstructor(Type.EmptyTypes) == null)
