@@ -137,9 +137,9 @@ internal static class TypeUtils
     /// <remarks>
     /// 支持的类型包括：
     /// <list type="bullet">
-    /// <item>Dictionary&lt;K,V&gt;</li>
-    /// <item>IDictionary&lt;K,V&gt;</li>
-    /// <item>实现 IDictionary&lt;K,V&gt; 的自定义类型</li>
+    /// <item>Dictionary&lt;K,V&gt;</item>
+    /// <item>IDictionary&lt;K,V&gt;</item>
+    /// <item>实现 IDictionary&lt;K,V&gt; 的自定义类型</item>
     /// </list>
     /// </remarks>
     /// <example>

@@ -531,7 +531,7 @@ public class ExpressionCompiler<TSource, TTarget> : ICompiler<TSource, TTarget> 
     }
 
     /// <summary>
-    /// 构建基础类型集合映射的核心表达式（如 List<int> -> List<long>）
+    /// 构建基础类型集合映射的核心表达式（如 List&lt;int&gt; -> List&lt;long&gt;）
     /// </summary>
     private static Expression BuildPrimitiveCollectionExpression(Expression sourceAccess,
         Type sourceType, Type targetType, Type sourceElementType, Type targetElementType)

@@ -44,7 +44,7 @@ public class EdgeCaseTest
     public void NullSource_Expression_ReturnsNull()
     {
         var mapper = new Mapper<SimpleSource, SimpleTarget>(ProcessTypeEnum.Expression);
-        var result = mapper.MapTo(null);
+        var result = mapper.MapTo(null!);
         Assert.IsNull(result);
     }
 
@@ -52,7 +52,7 @@ public class EdgeCaseTest
     public void NullSource_Emit_ReturnsNull()
     {
         var mapper = new Mapper<SimpleSource, SimpleTarget>(ProcessTypeEnum.Emit);
-        var result = mapper.MapTo(null);
+        var result = mapper.MapTo(null!);
         Assert.IsNull(result);
     }
 

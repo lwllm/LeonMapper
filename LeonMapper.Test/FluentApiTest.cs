@@ -401,7 +401,7 @@ public class FluentApiTest
     {
         Assert.ThrowsException<ArgumentException>(() =>
         {
-            Expression<Func<FluentTarget, string>> expr = d => d.ToString();
+            Expression<Func<FluentTarget, string>> expr = d => d.ToString()!;
             new Mapper<FluentSource, FluentTarget>(cfg =>
             {
                 cfg.ForMember(expr, opt => opt.MapFrom(s => s.FirstName));
@@ -689,6 +689,7 @@ public class FluentApiTest
             cfg.ForMember(d => d.FullName, opt => opt.MapFrom(s => s.FirstName));
         });
         var result = mapper.MapTo(source);
+        Assert.IsNotNull(result);
         Assert.AreEqual("A", result.FullName);
     }
 
