@@ -26,7 +26,7 @@ var dto = mapper.MapTo(user);
 
 - **双引擎** — Expression Tree 和 Reflection.Emit 两套引擎，功能完全一致
 - **零依赖** — 纯 .NET BCL，无任何第三方依赖
-- **高性能** — 4/4 测试场景超越 AutoMapper
+- **高性能** — 编译期生成映射代码，接近手写映射性能
 - **类型自动转换** — 内置所有 C# 基元类型互转，默认 `CultureInfo.InvariantCulture`
 - **嵌套对象映射** — 自动递归处理复杂类型属性，支持 3 层以上深度
 - **集合映射** — `List<T>`、数组、`IEnumerable<T>` 之间的互转
@@ -203,19 +203,6 @@ if (!validation.IsValid)
 var plan = Mapper<User, UserDto>.GetPlan();
 Console.WriteLine(plan);
 ```
-
-## 性能
-
-以下为 AutoMapper 16.1.1 与 LeonMapper 的 Benchmark 对比（.NET 8.0, AMD Ryzen 9 9950X3D）：
-
-| 场景 | LeonMapper Expression | LeonMapper Emit | AutoMapper |
-|------|---------------------:|----------------:|-----------:|
-| 简单对象 (5属性) | **5.3 ns** | **5.5 ns** | 39.5 ns |
-| 嵌套对象 (含地址) | **22.7 ns** | **27.7 ns** | 49.8 ns |
-| 集合映射 (10元素) | **137.3 ns** | **156.0 ns** | 150.6 ns |
-| 类型转换 (int↔string) | **69.6 ns** | **83.1 ns** | 106.2 ns |
-
-LeonMapper 在全部 4 个基准场景中优于 AutoMapper，简单对象场景快 7-8 倍。
 
 ## 循环引用保护
 
