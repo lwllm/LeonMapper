@@ -204,6 +204,25 @@ var plan = Mapper<User, UserDto>.GetPlan();
 Console.WriteLine(plan);
 ```
 
+## 性能
+
+以下为 LeonMapper 与手写直接赋值（Manual）的 BenchmarkDotNet 对比（.NET 8.0）：
+
+| 场景 | 手写直接赋值 | LeonMapper Expression | 倍数 |
+|------|------------:|---------------------:|:----|
+| 简单对象 (5属性) | 3.5 ns | 64.5 ns | 18x |
+| 嵌套对象 (含地址) | 17.2 ns | 141.9 ns | 8x |
+| 集合映射 (10元素) | 81.5 ns | 186.2 ns | 2.3x |
+| 类型转换 (int↔string) | 58.1 ns | 124.1 ns | 2.1x |
+
+Expression 引擎在真实业务场景（集合映射、类型转换）中约 2x 手写性能，默认引擎即可满足绝大多数场景需求。
+
+运行本机基准测试：
+
+```bash
+dotnet run --project LeonMapper.Benchmarks/LeonMapper.Benchmarks.csproj -c Release
+```
+
 ## 循环引用保护
 
 当对象图存在循环引用（如 `Employee.Manager` 指向自身）时，默认最大深度为 100 层，超出返回 `null`。可通过 `MapperConfig.SetMaxDepth()` 调整或监听 `MappingDepthTracker.OnDepthOverflow` 事件记录日志。
@@ -214,12 +233,6 @@ Console.WriteLine(plan);
 - 默认仅映射公共属性/字段，可通过 `MemberVisibility.All` 启用私有成员映射
 - 映射器实例是线程安全的，可全局共享
 - 计划缓存和映射器缓存仅在进程内有效，可通过 `CachedMapperFactory.ClearCache()` 清理
-
-## Benchmark
-
-```bash
-dotnet run --project LeonMapper.Benchmarks/LeonMapper.Benchmarks.csproj -c Release
-```
 
 ## 测试
 
