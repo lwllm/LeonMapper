@@ -7,7 +7,6 @@
 
     <!-- NuGet 包元数据 -->
     <PackageId>LeonMapper</PackageId>
-    <Version>1.0.1</Version>
     <Authors>Leon83</Authors>
     <Description>LeonMapper 是一个高性能的 C# 对象映射库，通过编译表达式树或 IL 生成实现对象到对象的映射。支持属性/字段映射、类型自动转换、嵌套对象、集合映射、可空类型等。</Description>
     <PackageTags>object-mapper;mapper;automapper;object-mapping;expression-tree;il-emit</PackageTags>
@@ -19,6 +18,8 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>CS1591</NoWarn>
     <NoPackageAnalysis>false</NoPackageAnalysis>
+    <MinVerTagPrefix>v</MinVerTagPrefix>
+    <MinVerDefaultPreReleasePhase>alpha</MinVerDefaultPreReleasePhase>
   </PropertyGroup>
 
   <ItemGroup>
@@ -33,6 +34,13 @@
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
       <_Parameter1>LeonMapper.Test</_Parameter1>
     </AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MinVer" Version="7.0.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
   </ItemGroup>
 
 </Project>
