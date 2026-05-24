@@ -1,7 +1,7 @@
-# LeonMapper
+﻿# LeonMapper
 
 [![NuGet](https://img.shields.io/nuget/v/LeonMapper)](https://www.nuget.org/packages/LeonMapper/)
-[![License](https://img.shields.io/github/license/luowuliang/LeonMapper)](LICENSE)
+[![License](https://img.shields.io/github/license/lwllm/LeonMapper)](LICENSE)
 
 一个高性能的 C# 对象映射库，通过编译期生成映射代码实现接近手写映射的性能。零依赖、双引擎、完整功能覆盖。
 
