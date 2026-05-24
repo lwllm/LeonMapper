@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Collections.Concurrent;
 using System.Reflection;
@@ -30,6 +30,27 @@ public static class MappingPlanBuilder
     {
         _planCache.Clear();
         _emptyPlanCache.Clear();
+    }
+
+    /// <summary>
+    /// 获取计划缓存数量
+    /// </summary>
+    public static int GetPlanCacheCount() => _planCache.Count;
+
+    /// <summary>
+    /// 移除指定类型对的计划缓存
+    /// </summary>
+    public static void RemovePlan(Type sourceType, Type targetType)
+    {
+        // ConcurrentDictionary.Keys 枚举是快照语义，直接遍历并 TryRemove 无需 ToList
+        foreach (var key in _planCache.Keys)
+        {
+            if (key.Source == sourceType && key.Target == targetType)
+            {
+                _planCache.TryRemove(key, out _);
+            }
+        }
+        _emptyPlanCache.TryRemove((sourceType, targetType), out _);
     }
 
     /// <summary>

@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -531,6 +531,11 @@ internal static class DelegateInvoker
     private static int _nextId;
 
     /// <summary>
+    /// 静态构造函数：订阅缓存清理事件
+    /// </summary>
+    static DelegateInvoker() => CachedMapperFactory.OnCacheCleared += ClearConverters;
+
+    /// <summary>
     /// 注册转换器委托，返回唯一 ID（线程安全）
     /// </summary>
     public static int RegisterConverter(Delegate converterFunc)
@@ -573,6 +578,20 @@ internal static class DelegateInvoker
 
         return -1;
     }
+
+    /// <summary>
+    /// 清空转换器缓存（由 CachedMapperFactory.OnCacheCleared 事件触发）
+    /// </summary>
+    public static void ClearConverters()
+    {
+        _converters.Clear();
+        _converterIds.Clear();
+    }
+
+    /// <summary>
+    /// 获取当前缓存的转换器数量
+    /// </summary>
+    public static int GetConverterCount() => _converters.Count;
 
     /// <summary>
     /// 通过 ID 调用缓存的转换器委托（支持可空类型）

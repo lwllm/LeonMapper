@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using LeonMapper.Attributes;
@@ -252,6 +252,76 @@ public class ValidationTest
         Assert.IsNotNull(plan);
         // AutoConvert=false 时，string->int 不应创建映射
         Assert.IsFalse(plan.AllMappings.Any(m => m.SourceMember.Name == "Name"));
+    }
+
+    #endregion
+
+    #region 可空类型警告精确化测试
+
+    public class NullableWarningSource
+    {
+        public int Id { get; set; }
+    }
+
+    public class NullableWarningTarget
+    {
+        public int Id { get; set; }
+
+        // 非可空值类型 - 未映射应提示 "默认值"
+        public int Score { get; set; }
+
+        // 可空值类型 - 未映射应提示 "可空值类型"
+        public int? NullableScore { get; set; }
+
+        // 引用类型 - 未映射应提示 "引用类型"
+        public string? Description { get; set; }
+
+        // 可空 Guid
+        public Guid? RefId { get; set; }
+
+        // 可空 DateTime
+        public DateTime? CreatedAt { get; set; }
+    }
+
+    [TestMethod]
+    public void Validate_NullableTargetMember_ShouldHaveDistinctWarnings()
+    {
+        var plan = MappingPlanBuilder.Build<NullableWarningSource, NullableWarningTarget>();
+        var result = LeonMapper.Validation.MappingValidator.Validate(plan);
+
+        Assert.IsTrue(result.IsValid);
+
+        // 查找不同类型的警告
+        var warnings = result.Warnings;
+
+        // 非可空值类型警告
+        Assert.IsTrue(warnings.Any(w => w.Contains("Score") && w.Contains("将使用默认值")),
+            "非可空值类型 Score 应有默认值警告");
+
+        // 可空值类型警告
+        Assert.IsTrue(warnings.Any(w => w.Contains("NullableScore") && w.Contains("可空值类型")),
+            "可空值类型 NullableScore 应有可空值类型警告");
+
+        // 引用类型警告
+        Assert.IsTrue(warnings.Any(w => w.Contains("Description") && w.Contains("string，默认为 null")),
+            "string 类型 Description 应有 string 默认值警告");
+
+        // 可空 Guid
+        Assert.IsTrue(warnings.Any(w => w.Contains("RefId") && w.Contains("可空值类型")),
+            "可空值类型 RefId 应有可空值类型警告");
+
+        // 可空 DateTime
+        Assert.IsTrue(warnings.Any(w => w.Contains("CreatedAt") && w.Contains("可空值类型")),
+            "可空值类型 CreatedAt 应有可空值类型警告");
+    }
+
+    [TestMethod]
+    public void Validate_AllMembersMapped_NoUnmappedWarnings()
+    {
+        var plan = MappingPlanBuilder.Build<NullableWarningSource, NullableWarningTarget>();
+
+        // Score, NullableScore, Description, RefId, CreatedAt 都是未映射的
+        Assert.IsTrue(plan.UnmappedTargetMembers.Count >= 4, "应有多个未映射目标成员");
     }
 
     #endregion

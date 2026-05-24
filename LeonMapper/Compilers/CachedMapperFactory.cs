@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;
 using LeonMapper.Plan;
@@ -64,6 +64,28 @@ internal static class CachedMapperFactory
     /// 获取当前缓存的 Mapper 实例数量
     /// </summary>
     public static int GetCacheSize() => _mapperCache.Count;
+
+    /// <summary>
+    /// 获取缓存统计信息
+    /// </summary>
+    public static CacheStatistics GetCacheStatistics() => new(
+        _mapperCache.Count,
+        _mapFuncCache.Count,
+        _emptyMapperCache.Count,
+        MappingPlanBuilder.GetPlanCacheCount());
+
+    /// <summary>
+    /// 移除指定类型对的缓存（不影响其他缓存）
+    /// </summary>
+    public static bool RemoveMapper(Type sourceType, Type targetType)
+    {
+        var key = (sourceType, targetType);
+        var removed = _mapperCache.TryRemove(key, out _);
+        _mapFuncCache.TryRemove(key, out _);
+        _emptyMapperCache.TryRemove(key, out _);
+        MappingPlanBuilder.RemovePlan(sourceType, targetType);
+        return removed;
+    }
 
     /// <summary>
     /// 获取或创建映射委托（用于 ExpressionCompiler 的表达式树，线程安全）

@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 
 namespace LeonMapper.Utils;
 
@@ -17,23 +17,57 @@ namespace LeonMapper.Utils;
 internal static class TypeUtils
 {
     /// <summary>
-    /// 判断类型是否为基础类型（基元类型、string、decimal）
+    /// 判断类型是否为基础类型（基元类型、string、decimal、enum 及常见不可变 struct 类型）
     /// </summary>
     /// <param name="type">要判断的类型，不能为 null</param>
-    /// <returns>如果类型是基元类型、string 或 decimal，返回 true；否则返回 false</returns>
+    /// <returns>如果类型是基础类型，返回 true；否则返回 false</returns>
     /// <exception cref="ArgumentNullException">当 type 为 null 时抛出</exception>
+    /// <remarks>
+    /// 基础类型包括：
+    /// <list type="bullet">
+    /// <item>基元类型（int, bool, char, byte, short, long, float, double 等）</item>
+    /// <item>string</item>
+    /// <item>decimal</item>
+    /// <item>enum 类型</item>
+    /// <item>常见的不可变 struct 类型（DateTime, DateTimeOffset, Guid, TimeSpan, DateOnly, TimeOnly）</item>
+    /// </list>
+    /// 这些类型在映射时同类型之间可以直接赋值，不需要嵌套映射。
+    /// </remarks>
     /// <example>
     /// <code>
-    /// TypeUtils.IsBaseType(typeof(int));     // true
-    /// TypeUtils.IsBaseType(typeof(string));  // true
-    /// TypeUtils.IsBaseType(typeof(decimal)); // true
-    /// TypeUtils.IsBaseType(typeof(DateTime)); // false
+    /// TypeUtils.IsBaseType(typeof(int));          // true
+    /// TypeUtils.IsBaseType(typeof(string));       // true
+    /// TypeUtils.IsBaseType(typeof(decimal));      // true
+    /// TypeUtils.IsBaseType(typeof(DateTime));     // true (新增)
+    /// TypeUtils.IsBaseType(typeof(Guid));         // true (新增)
+    /// TypeUtils.IsBaseType(typeof(MyClass));      // false
     /// </code>
     /// </example>
     public static bool IsBaseType(Type type)
     {
         ArgumentNullException.ThrowIfNull(type);
-        return type.IsPrimitive || type == typeof(string) || type == typeof(decimal) || type.IsEnum;
+        
+        // 快速路径：string 和 decimal 是引用类型但属于基础类型
+        if (type == typeof(string) || type == typeof(decimal))
+        {
+            return true;
+        }
+        
+        // 值类型快速排除：只有值类型才可能是 Primitive/Enum/DateTime 等
+        if (!type.IsValueType)
+        {
+            return false;
+        }
+        
+        // 值类型分支：Primitive/Enum/DateTime/Guid 等
+        return type.IsPrimitive
+            || type.IsEnum
+            || type == typeof(DateTime)
+            || type == typeof(DateTimeOffset)
+            || type == typeof(Guid)
+            || type == typeof(TimeSpan)
+            || type == typeof(DateOnly)
+            || type == typeof(TimeOnly);
     }
 
     /// <summary>

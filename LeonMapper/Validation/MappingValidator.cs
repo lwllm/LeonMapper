@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using LeonMapper.Plan;
 using LeonMapper.Utils;
 
@@ -36,15 +36,21 @@ public static class MappingValidator
         // 检查未映射的目标属性（可能有默认值，所以是 warning）
         foreach (var member in plan.UnmappedTargetMembers)
         {
-            var hasDefault = member switch
-            {
-                PropertyInfo p => p.PropertyType.IsValueType || p.PropertyType == typeof(string),
-                FieldInfo f => f.FieldType.IsValueType || f.FieldType == typeof(string),
-                _ => true
-            };
-            if (hasDefault)
+            var memberType = member is PropertyInfo p ? p.PropertyType : member is FieldInfo f ? f.FieldType : typeof(object);
+            var isNullableValueType = TypeUtils.IsNullableType(memberType);
+            var isNonNullableValueType = memberType.IsValueType && !isNullableValueType;
+
+            if (isNonNullableValueType)
             {
                 warnings.Add($"目标成员 {member.Name} 未被映射（将使用默认值）");
+            }
+            else if (memberType == typeof(string))
+            {
+                warnings.Add($"目标成员 {member.Name} 未被映射（string，默认为 null）");
+            }
+            else if (isNullableValueType)
+            {
+                warnings.Add($"目标成员 {member.Name} 未被映射（可空值类型，默认为 null）");
             }
             else
             {
