@@ -304,20 +304,12 @@ public class ExpressionCompiler<TSource, TTarget> : ICompiler<TSource, TTarget> 
     /// </summary>
     private static MemberBinding? BuildPropertyBinding(ParameterExpression sourceParam, MemberMapping mapping)
     {
-        var sourceProp = (PropertyInfo)mapping.SourceMember;
         var targetProp = (PropertyInfo)mapping.TargetMember;
-
-        var sourceAccess = Expression.Property(sourceParam, sourceProp);
-
-        return mapping.Strategy switch
-        {
-            MappingStrategy.Direct => BuildDirectBinding(targetProp, sourceAccess),
-            MappingStrategy.Convert => BuildConvertBinding(targetProp, sourceAccess, mapping),
-            MappingStrategy.Complex => BuildComplexBinding(targetProp, sourceAccess, mapping),
-            MappingStrategy.Collection => BuildCollectionBinding(targetProp, sourceAccess, mapping),
-            MappingStrategy.Dictionary => BuildDictionaryBinding(targetProp, sourceAccess, mapping),
-            _ => null
-        };
+        var sourceAccess = GetSourceAccess(sourceParam, mapping);
+        var binding = BuildBindingByStrategy(targetProp, sourceAccess, mapping);
+        return binding != null && mapping.ConditionExpression != null
+            ? ApplyConditionBinding(binding, sourceParam, mapping.ConditionExpression)
+            : binding;
     }
 
     /// <summary>
@@ -325,18 +317,44 @@ public class ExpressionCompiler<TSource, TTarget> : ICompiler<TSource, TTarget> 
     /// </summary>
     private static MemberBinding? BuildFieldBinding(ParameterExpression sourceParam, MemberMapping mapping)
     {
-        var sourceField = (FieldInfo)mapping.SourceMember;
         var targetField = (FieldInfo)mapping.TargetMember;
+        var sourceAccess = GetSourceAccess(sourceParam, mapping);
+        var binding = BuildBindingByStrategy(targetField, sourceAccess, mapping);
+        return binding != null && mapping.ConditionExpression != null
+            ? ApplyConditionBinding(binding, sourceParam, mapping.ConditionExpression)
+            : binding;
+    }
 
-        var sourceAccess = Expression.Field(sourceParam, sourceField);
+    /// <summary>
+    /// 获取源成员的访问表达式（支持自定义表达式和默认属性/字段访问）
+    /// </summary>
+    private static Expression GetSourceAccess(ParameterExpression sourceParam, MemberMapping mapping)
+    {
+        if (mapping.CustomSourceExpression != null)
+        {
+            return ParameterReplacer.Replace(
+                mapping.CustomSourceExpression.Body,
+                mapping.CustomSourceExpression.Parameters[0],
+                sourceParam);
+        }
 
+        return mapping.SourceMember is PropertyInfo sourceProp
+            ? Expression.Property(sourceParam, sourceProp)
+            : Expression.Field(sourceParam, (FieldInfo)mapping.SourceMember);
+    }
+
+    /// <summary>
+    /// 根据映射策略构建成员绑定表达式
+    /// </summary>
+    private static MemberBinding? BuildBindingByStrategy(MemberInfo targetMember, Expression sourceAccess, MemberMapping mapping)
+    {
         return mapping.Strategy switch
         {
-            MappingStrategy.Direct => BuildDirectBinding(targetField, sourceAccess),
-            MappingStrategy.Convert => BuildConvertBinding(targetField, sourceAccess, mapping),
-            MappingStrategy.Complex => BuildComplexBinding(targetField, sourceAccess, mapping),
-            MappingStrategy.Collection => BuildCollectionBinding(targetField, sourceAccess, mapping),
-            MappingStrategy.Dictionary => BuildDictionaryBinding(targetField, sourceAccess, mapping),
+            MappingStrategy.Direct => BuildDirectBinding(targetMember, sourceAccess),
+            MappingStrategy.Convert => BuildConvertBinding(targetMember, sourceAccess, mapping),
+            MappingStrategy.Complex => BuildComplexBinding(targetMember, sourceAccess, mapping),
+            MappingStrategy.Collection => BuildCollectionBinding(targetMember, sourceAccess, mapping),
+            MappingStrategy.Dictionary => BuildDictionaryBinding(targetMember, sourceAccess, mapping),
             _ => null
         };
     }
@@ -683,5 +701,54 @@ public class ExpressionCompiler<TSource, TTarget> : ICompiler<TSource, TTarget> 
 
         var mapCall = Expression.Call(mapperConstant, mapMethod, sourceAccess);
         return Expression.Convert(mapCall, targetValueType);
+    }
+
+    /// <summary>
+    /// 将条件表达式应用到成员绑定上：condition ? value : default(T)
+    /// </summary>
+    private static MemberBinding ApplyConditionBinding(MemberBinding binding,
+        ParameterExpression sourceParam, LambdaExpression conditionExpression)
+    {
+        if (binding is MemberAssignment assignment)
+        {
+            var conditionBody = ParameterReplacer.Replace(
+                conditionExpression.Body,
+                conditionExpression.Parameters[0],
+                sourceParam);
+
+            var conditionalValue = Expression.Condition(
+                conditionBody,
+                assignment.Expression,
+                Expression.Default(assignment.Expression.Type));
+
+            return Expression.Bind(assignment.Member, conditionalValue);
+        }
+
+        return binding;
+    }
+
+    /// <summary>
+    /// 表达式参数替换访问器
+    /// </summary>
+    private class ParameterReplacer : ExpressionVisitor
+    {
+        private readonly ParameterExpression _from;
+        private readonly ParameterExpression _to;
+
+        private ParameterReplacer(ParameterExpression from, ParameterExpression to)
+        {
+            _from = from;
+            _to = to;
+        }
+
+        public static Expression Replace(Expression body, ParameterExpression from, ParameterExpression to)
+        {
+            return new ParameterReplacer(from, to).Visit(body);
+        }
+
+        protected override Expression VisitParameter(ParameterExpression node)
+        {
+            return node == _from ? _to : base.VisitParameter(node);
+        }
     }
 }

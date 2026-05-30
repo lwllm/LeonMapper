@@ -14,6 +14,13 @@ namespace LeonMapper.Compilers;
 
 /// <summary>
 /// IL 编译器：从 TypeMappingPlan 通过 IL Emit 生成映射委托
+/// <para><b>性能说明</b>：</para>
+/// <list type="bullet">
+///   <item>常规映射（属性/字段直接赋值、转换器、嵌套对象、集合、字典）：零额外开销，与手写 IL 等效</item>
+///   <item>自定义表达式映射（如 opt.MapFrom(s => s.A + s.B)）：表达式在构建时编译为委托，运行时通过 DynamicInvoke 调用，存在 boxing 开销</item>
+///   <item>Condition 条件映射：条件表达式编译为委托，运行时通过 DynamicInvoke 调用</item>
+/// </list>
+/// <para>如需最优性能，推荐使用 ExpressionCompiler（自定义表达式直接嵌入表达式树，无运行时委托调用开销）</para>
 /// </summary>
 /// <typeparam name="TSource">源类型</typeparam>
 /// <typeparam name="TTarget">目标类型</typeparam>
@@ -84,17 +91,30 @@ public class EmitCompiler<TSource, TTarget> : ICompiler<TSource, TTarget> where 
     }
 
     /// <summary>
-    /// 生成属性拷贝的 IL 指令
+    /// 生成属性拷贝的 IL 指令（支持自定义表达式和条件）
     /// </summary>
     private static void EmitPropertyCopy(ILGenerator il, LocalBuilder targetLocal, MemberMapping mapping)
     {
-        var sourceProp = (PropertyInfo)mapping.SourceMember;
         var targetProp = (PropertyInfo)mapping.TargetMember;
         var includeNonPublic = MapperConfig.GetMemberVisibility() == Config.MemberVisibility.All;
-        var getMethod = sourceProp.GetGetMethod(includeNonPublic);
         var setMethod = targetProp.GetSetMethod(includeNonPublic);
 
-        if (getMethod == null || setMethod == null)
+        if (setMethod == null)
+        {
+            return;
+        }
+
+        // 自定义表达式映射（如 s => s.A + s.B）
+        if (mapping.CustomSourceExpression != null)
+        {
+            EmitCustomExpressionPropertyCopy(il, targetLocal, mapping, targetProp.PropertyType, setMethod);
+            return;
+        }
+
+        var sourceProp = (PropertyInfo)mapping.SourceMember;
+        var getMethod = sourceProp.GetGetMethod(includeNonPublic);
+
+        if (getMethod == null)
         {
             return;
         }
@@ -106,17 +126,104 @@ public class EmitCompiler<TSource, TTarget> : ICompiler<TSource, TTarget> where 
     }
 
     /// <summary>
-    /// 生成字段拷贝的 IL 指令
+    /// 生成自定义表达式属性映射的 IL 指令
+    /// </summary>
+    private static void EmitCustomExpressionPropertyCopy(ILGenerator il, LocalBuilder targetLocal, MemberMapping mapping,
+        Type targetPropertyType, MethodInfo setMethod)
+    {
+        EmitExpressionInvokeCore(il, targetLocal, mapping, targetPropertyType,
+            () => il.Emit(setMethod.IsVirtual ? OpCodes.Callvirt : OpCodes.Call, setMethod));
+    }
+
+    /// <summary>
+    /// 生成字段拷贝的 IL 指令（支持自定义表达式和条件）
     /// </summary>
     private static void EmitFieldCopy(ILGenerator il, LocalBuilder targetLocal, MemberMapping mapping)
     {
-        var sourceField = (FieldInfo)mapping.SourceMember;
         var targetField = (FieldInfo)mapping.TargetMember;
+
+        // 自定义表达式映射（如 s => s.A + s.B）
+        if (mapping.CustomSourceExpression != null)
+        {
+            EmitCustomExpressionFieldCopy(il, targetLocal, mapping, targetField);
+            return;
+        }
+
+        var sourceField = (FieldInfo)mapping.SourceMember;
 
         EmitMemberCopy(il, targetLocal, mapping, sourceField.FieldType, targetField.FieldType,
             () => il.Emit(OpCodes.Ldarg_0),
             () => il.Emit(OpCodes.Ldfld, sourceField),
             () => il.Emit(OpCodes.Stfld, targetField));
+    }
+
+    /// <summary>
+    /// 生成自定义表达式字段映射的 IL 指令
+    /// </summary>
+    private static void EmitCustomExpressionFieldCopy(ILGenerator il, LocalBuilder targetLocal, MemberMapping mapping, FieldInfo targetField)
+    {
+        EmitExpressionInvokeCore(il, targetLocal, mapping, targetField.FieldType,
+            () => il.Emit(OpCodes.Stfld, targetField));
+    }
+
+    /// <summary>
+    /// 自定义表达式映射的 IL 核心逻辑：编译表达式 → InvokeCustom → 类型转换 → 设置成员
+    /// </summary>
+    /// <summary>
+    /// 自定义表达式映射的 IL 核心逻辑：编译表达式 → InvokeCustom → 类型转换 → 设置成员
+    /// </summary>
+    /// <summary>
+    /// 自定义表达式映射的 IL 核心逻辑：编译表达式 -> InvokeCustom -> 类型转换 -> 设置成员
+    /// </summary>
+    private static void EmitExpressionInvokeCore(ILGenerator il, LocalBuilder targetLocal, MemberMapping mapping,
+        Type targetMemberType, Action emitSetValue)
+    {
+        if (mapping.CustomSourceExpression == null) return;
+
+        var sourceType = typeof(TSource);
+        var returnType = mapping.CustomSourceExpression.Body.Type;
+        var funcType = typeof(Func<,>).MakeGenericType(sourceType, returnType);
+        var compiled = System.Linq.Expressions.Expression.Lambda(funcType,
+            mapping.CustomSourceExpression.Body, mapping.CustomSourceExpression.Parameters).Compile();
+        var funcId = ExpressionInvoker.Register(compiled);
+
+        var conditionId = -1;
+        if (mapping.ConditionExpression != null)
+        {
+            var conditionFuncType = typeof(Func<,>).MakeGenericType(sourceType, typeof(bool));
+            var conditionCompiled = System.Linq.Expressions.Expression.Lambda(conditionFuncType,
+                mapping.ConditionExpression.Body, mapping.ConditionExpression.Parameters).Compile();
+            conditionId = ExpressionInvoker.Register(conditionCompiled);
+        }
+
+        var invokeMethod = typeof(ExpressionInvoker)
+            .GetMethod(nameof(ExpressionInvoker.InvokeCustom), [typeof(int), typeof(object), typeof(int)])
+            ?? throw new InvalidOperationException("未找到 ExpressionInvoker.InvokeCustom 方法");
+
+        // 调用 InvokeCustom(funcId, source, conditionId) -> object?
+        il.Emit(OpCodes.Ldc_I4, funcId);
+        il.Emit(OpCodes.Ldarg_0);
+        if (typeof(TSource).IsValueType) il.Emit(OpCodes.Box, typeof(TSource));
+        il.Emit(OpCodes.Ldc_I4, conditionId);
+        il.Emit(OpCodes.Call, invokeMethod);
+
+        // 将结果存入局部变量，null 时跳过赋值（保留目标默认值）
+        var resultLocal = il.DeclareLocal(typeof(object));
+        il.Emit(OpCodes.Stloc, resultLocal);
+        il.Emit(OpCodes.Ldloc, resultLocal);
+        var skipSetLabel = il.DefineLabel();
+        il.Emit(OpCodes.Brfalse_S, skipSetLabel);
+
+        // 非 null：加载 target + result -> unbox -> set
+        il.Emit(OpCodes.Ldloc, targetLocal);
+        il.Emit(OpCodes.Ldloc, resultLocal);
+        if (targetMemberType.IsValueType)
+            il.Emit(OpCodes.Unbox_Any, targetMemberType);
+        else
+            il.Emit(OpCodes.Castclass, targetMemberType);
+        emitSetValue();
+
+        il.MarkLabel(skipSetLabel);
     }
 
     /// <summary>
@@ -973,4 +1080,87 @@ internal static class ComplexMapperHelper<TSource, TTarget>
 
         return _mapper.MapTo(source);
     }
+}
+
+/// <summary>
+/// 自定义表达式调用辅助类：供 EmitCompiler 通过 IL 静态调用已编译的表达式委托
+/// </summary>
+internal static class ExpressionInvoker
+{
+    private static readonly ConcurrentDictionary<int, Delegate> _cache = new();
+    private static readonly ConcurrentDictionary<Delegate, int> _delegateIds = new();
+    private static int _nextId;
+
+    /// <summary>
+    /// 静态构造函数：订阅缓存清理事件
+    /// </summary>
+    static ExpressionInvoker() => CachedMapperFactory.OnCacheCleared += ClearCache;
+
+    /// <summary>
+    /// 注册一个已编译的委托，返回唯一 ID（线程安全，同一委托不重复注册）
+    /// </summary>
+    public static int Register(Delegate compiledFunc)
+    {
+        if (_delegateIds.TryGetValue(compiledFunc, out var existingId))
+        {
+            return existingId;
+        }
+
+        var id = Interlocked.Increment(ref _nextId) - 1;
+        if (_cache.TryAdd(id, compiledFunc))
+        {
+            if (!_delegateIds.TryAdd(compiledFunc, id))
+            {
+                _delegateIds.TryGetValue(compiledFunc, out var otherId);
+                _cache.TryRemove(id, out _);
+                return otherId;
+            }
+            return id;
+        }
+
+        _delegateIds.TryGetValue(compiledFunc, out var retryId);
+        return retryId;
+    }
+
+    /// <summary>
+    /// 调用自定义表达式委托，支持可选的 Condition 条件
+    /// 当 conditionId >= 0 且条件不满足时，返回 null
+    /// </summary>
+    public static object? InvokeCustom(int funcId, object? source, int conditionId)
+    {
+        if (source == null)
+        {
+            return null;
+        }
+
+        if (conditionId >= 0 && _cache.TryGetValue(conditionId, out var conditionDel))
+        {
+            var conditionResult = (bool)(conditionDel.DynamicInvoke(source) ?? false);
+            if (!conditionResult)
+            {
+                return null;
+            }
+        }
+
+        if (_cache.TryGetValue(funcId, out var func))
+        {
+            return func.DynamicInvoke(source);
+        }
+
+        throw new InvalidOperationException($"未找到 ID 为 {funcId} 的自定义表达式委托");
+    }
+
+    /// <summary>
+    /// 清空缓存（由 CachedMapperFactory.OnCacheCleared 事件触发）
+    /// </summary>
+    public static void ClearCache()
+    {
+        _cache.Clear();
+        _delegateIds.Clear();
+    }
+
+    /// <summary>
+    /// 获取缓存数量
+    /// </summary>
+    public static int GetCacheCount() => _cache.Count;
 }

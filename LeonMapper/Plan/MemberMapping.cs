@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using System.Reflection;
 
 namespace LeonMapper.Plan;
@@ -7,8 +8,8 @@ namespace LeonMapper.Plan;
 /// </summary>
 public class MemberMapping
 {
-    /// <summary>源成员</summary>
-    public MemberInfo SourceMember { get; }
+    /// <summary>源成员（自定义表达式映射时可为 null）</summary>
+    public MemberInfo? SourceMember { get; }
 
     /// <summary>目标成员</summary>
     public MemberInfo TargetMember { get; }
@@ -44,6 +45,16 @@ public class MemberMapping
     public TypeMappingPlan? DictionaryValueNestedPlan { get; }
 
     /// <summary>
+    /// 自定义源表达式（用于 Fluent API MapFrom 的非成员表达式映射，如 s => s.A + s.B）
+    /// </summary>
+    public LambdaExpression? CustomSourceExpression { get; }
+
+    /// <summary>
+    /// 条件表达式（用于 Fluent API Condition，映射仅当条件满足时执行）
+    /// </summary>
+    public LambdaExpression? ConditionExpression { get; }
+
+    /// <summary>
     /// 构造常规映射规则（非 Dictionary 策略）
     /// </summary>
     public MemberMapping(MemberInfo sourceMember, MemberInfo targetMember, MappingStrategy strategy,
@@ -54,6 +65,31 @@ public class MemberMapping
         Strategy = strategy;
         Converter = converter;
         NestedPlan = nestedPlan;
+    }
+
+    /// <summary>
+    /// 构造自定义表达式映射规则（含 Condition）
+    /// </summary>
+    public MemberMapping(MemberInfo sourceMember, MemberInfo targetMember, MappingStrategy strategy,
+        LambdaExpression? customSourceExpression, LambdaExpression? conditionExpression)
+    {
+        SourceMember = sourceMember;
+        TargetMember = targetMember;
+        Strategy = strategy;
+        CustomSourceExpression = customSourceExpression;
+        ConditionExpression = conditionExpression;
+    }
+
+    /// <summary>
+    /// 构造完整配置的映射规则（含转换器、嵌套计划、自定义表达式和条件）
+    /// </summary>
+    public MemberMapping(MemberInfo sourceMember, MemberInfo targetMember, MappingStrategy strategy,
+        object? converter, TypeMappingPlan? nestedPlan,
+        LambdaExpression? customSourceExpression, LambdaExpression? conditionExpression)
+        : this(sourceMember, targetMember, strategy, converter, nestedPlan)
+    {
+        CustomSourceExpression = customSourceExpression;
+        ConditionExpression = conditionExpression;
     }
 
     /// <summary>
@@ -87,6 +123,12 @@ public class MemberMapping
             MappingStrategy.Dictionary => $"Dictionary<{DictionarySourceKeyType?.Name},{DictionarySourceValueType?.Name} -> {DictionaryTargetKeyType?.Name},{DictionaryTargetValueType?.Name}>",
             _ => "Direct"
         };
+
+        if (CustomSourceExpression != null)
+        {
+            return $"[Expr] -> {TargetMember.Name} ({strategyStr})";
+        }
+
         return $"{SourceMember.Name} -> {TargetMember.Name} ({strategyStr})";
     }
 }

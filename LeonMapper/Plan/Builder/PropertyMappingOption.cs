@@ -12,6 +12,7 @@ public class PropertyMappingOption<TSource>
     internal LambdaExpression? SourceExpression { get; set; }
     internal object? Converter { get; set; }
     internal Type? ConverterType { get; set; }
+    internal LambdaExpression? ConditionExpression { get; set; }
 
     /// <summary>
     /// 忽略此目标成员，不接收任何映射
@@ -22,19 +23,13 @@ public class PropertyMappingOption<TSource>
     }
 
     /// <summary>
-    /// 从指定的源成员映射
+    /// 从指定的源成员映射（支持任意表达式，如 s => s.FirstName + s.LastName）
+    /// 注意：表达式的返回值类型必须与目标属性一致或可隐式转换
     /// </summary>
-    /// <typeparam name="TProperty">属性类型</typeparam>
-    /// <param name="sourceExpression">源成员访问表达式，如 s => s.Name</param>
+    /// <typeparam name="TProperty">返回值类型</typeparam>
+    /// <param name="sourceExpression">源成员访问表达式，如 s => s.Name 或 s => s.FirstName + s.LastName</param>
     public void MapFrom<TProperty>(Expression<Func<TSource, TProperty>> sourceExpression)
     {
-        if (sourceExpression.Body is not MemberExpression memberExpr)
-        {
-            throw new ArgumentException(
-                "MapFrom 表达式必须是简单的成员访问，例如 s => s.PropertyName",
-                nameof(sourceExpression));
-        }
-
         ActionType = MemberMappingActionType.MapFrom;
         SourceExpression = sourceExpression;
     }
@@ -48,5 +43,14 @@ public class PropertyMappingOption<TSource>
         ActionType = MemberMappingActionType.ConvertUsing;
         Converter = new TConverter();
         ConverterType = typeof(TConverter);
+    }
+
+    /// <summary>
+    /// 设置条件映射：仅当条件满足时才执行映射
+    /// </summary>
+    /// <param name="predicate">条件表达式，如 src => src.Age > 18</param>
+    public void Condition(Expression<Func<TSource, bool>> predicate)
+    {
+        ConditionExpression = predicate;
     }
 }

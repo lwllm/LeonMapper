@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Linq.Expressions;
 using LeonMapper.Attributes;
@@ -332,13 +332,121 @@ public class FluentApiTest
     [TestMethod]
     public void ForMember_MapFrom_InvalidExpression_ShouldThrow()
     {
-        Assert.ThrowsException<ArgumentException>(() =>
+        // 现在支持任意表达式，不再抛出异常
+        var source = new FluentSource { FirstName = "Leon", LastName = "Wang" };
+        var mapper = new Mapper<FluentSource, FluentTarget>(cfg =>
         {
-            new Mapper<FluentSource, FluentTarget>(cfg =>
+            cfg.ForMember(d => d.FullName, opt => opt.MapFrom(s => s.FirstName + " " + s.LastName));
+        });
+        var result = mapper.MapTo(source);
+        Assert.IsNotNull(result);
+        Assert.AreEqual("Leon Wang", result.FullName);
+    }
+
+    [TestMethod]
+    public void ForMember_MapFrom_ConstantExpression_ShouldMap()
+    {
+        // 常量表达式映射
+        var source = new FluentSource { FirstName = "Leon", Age = 30 };
+        var mapper = new Mapper<FluentSource, FluentTarget>(cfg =>
+        {
+            cfg.ForMember(d => d.FullName, opt => opt.MapFrom(s => "ConstantValue"));
+            cfg.ForMember(d => d.ContactEmail, opt => opt.MapFrom(s => "test@example.com"));
+            cfg.ForMember(d => d.Phone, opt => opt.Ignore());
+        });
+        var result = mapper.MapTo(source);
+        Assert.IsNotNull(result);
+        Assert.AreEqual("ConstantValue", result.FullName);
+        Assert.AreEqual("test@example.com", result.ContactEmail);
+    }
+
+    [TestMethod]
+    public void ForMember_Condition_ShouldOnlyMapWhenTrue()
+    {
+        // 条件映射：Age > 18 时才映射 FullName
+        var sourceAdult = new FluentSource { FirstName = "Adult", Age = 25, Phone = "111" };
+        var sourceChild = new FluentSource { FirstName = "Child", Age = 10, Phone = "222" };
+
+        var mapper = new Mapper<FluentSource, FluentTarget>(cfg =>
+        {
+            cfg.ForMember(d => d.FullName, opt =>
             {
-                cfg.ForMember(d => d.FullName, opt => opt.MapFrom(s => s.FirstName + s.LastName));
+                opt.Condition(src => src.Age > 18);
+                opt.MapFrom(s => s.FirstName);
+            });
+            cfg.ForMember(d => d.Phone, opt => opt.Ignore());
+        });
+
+        var adultResult = mapper.MapTo(sourceAdult);
+        Assert.IsNotNull(adultResult);
+        Assert.AreEqual("Adult", adultResult.FullName);
+
+        var childResult = mapper.MapTo(sourceChild);
+        Assert.IsNotNull(childResult);
+        Assert.IsNull(childResult.FullName); // 条件不满足，string 默认值为 null
+    }
+
+    [TestMethod]
+    public void ForMember_Condition_WithComplexExpression_ShouldWork()
+    {
+        // 条件 + 复杂表达式组合
+        var source = new FluentSource { FirstName = "Leon", LastName = "Wang", Age = 30 };
+        var mapper = new Mapper<FluentSource, FluentTarget>(cfg =>
+        {
+            cfg.ForMember(d => d.FullName, opt =>
+            {
+                opt.Condition(src => src.Age >= 18);
+                opt.MapFrom(s => s.FirstName + "." + s.LastName);
             });
         });
+        var result = mapper.MapTo(source);
+        Assert.IsNotNull(result);
+        Assert.AreEqual("Leon.Wang", result.FullName);
+    }
+
+    [TestMethod]
+    public void ForMember_Condition_False_ShouldKeepDefault()
+    {
+        var source = new FluentSource { FirstName = "Test", Age = 15 };
+        var mapper = new Mapper<FluentSource, FluentTarget>(cfg =>
+        {
+            cfg.ForMember(d => d.FullName, opt =>
+            {
+                opt.Condition(src => src.Age > 18);
+                opt.MapFrom(s => s.FirstName);
+            });
+        });
+        var result = mapper.MapTo(source);
+        Assert.IsNotNull(result);
+        // Condition false -> Expression.Default(string) = null
+        Assert.IsNull(result.FullName);
+    }
+
+    [TestMethod]
+    public void ForMember_Condition_WithEmitCompiler_ShouldWork()
+    {
+        var source = new FluentSource { FirstName = "Emit", Age = 20 };
+        var config = new MappingConfiguration<FluentSource, FluentTarget>();
+        config.ForMember(d => d.FullName, opt =>
+        {
+            opt.Condition(src => src.Age > 18);
+            opt.MapFrom(s => s.FirstName);
+        });
+
+        var plan = MappingPlanBuilder.Build(config);
+        var originalType = MapperConfig.GetDefaultProcessType();
+        MapperConfig.SetConfiguration(ProcessTypeEnum.Emit, MapperConfig.GetDefaultConverterScope(), true);
+        try
+        {
+            var mapper = new Mapper<FluentSource, FluentTarget>(plan);
+            var result = mapper.MapTo(source);
+            Assert.IsNotNull(result);
+            Assert.AreEqual("Emit", result.FullName);
+        }
+        finally
+        {
+            MapperConfig.SetConfiguration(originalType, MapperConfig.GetDefaultConverterScope(), true);
+        }
     }
 
     [TestMethod]
@@ -827,4 +935,189 @@ public class FluentApiTest
             MapperConfig.SetConfiguration(originalType, MapperConfig.GetDefaultConverterScope(), true);
         }
     }
+
+    #region ReverseMap Tests
+
+    [TestMethod]
+    public void ReverseMap_SimpleMemberAccess_ShouldCreateBidirectionalMapping()
+    {
+        // Forward: Target.FullName = Source.FirstName
+        // Reverse: Source.FirstName = Target.FullName
+        var config = new MappingConfiguration<FluentSource, FluentTarget>();
+        config.ForMember(d => d.FullName, opt => opt.MapFrom(s => s.FirstName));
+        config.ForMember(d => d.Phone, opt => opt.Ignore());
+
+        var reverseConfig = config.ReverseMap();
+
+        var source = new FluentSource { FirstName = "Leon", Age = 25 };
+        var target = new FluentTarget { FullName = "FromTarget", Phone = "ignore" };
+
+        // Forward mapping
+        var forwardMapper = new Mapper<FluentSource, FluentTarget>(cfg =>
+        {
+            cfg.ForMember(d => d.FullName, opt => opt.MapFrom(s => s.FirstName));
+            cfg.ForMember(d => d.Phone, opt => opt.Ignore());
+        });
+        var forwardResult = forwardMapper.MapTo(source);
+        Assert.IsNotNull(forwardResult);
+        Assert.AreEqual("Leon", forwardResult.FullName);
+
+        // Reverse mapping: should set FirstName from FullName
+        var reverseMapper = new Mapper<FluentTarget, FluentSource>(_ =>
+        {
+            // Use the reverse config
+        });
+        // Use plan from reverse config
+        var plan = MappingPlanBuilder.Build(reverseConfig);
+        var revMapper = new Mapper<FluentTarget, FluentSource>(plan);
+        var reverseResult = revMapper.MapTo(target);
+        Assert.IsNotNull(reverseResult);
+        Assert.AreEqual("FromTarget", reverseResult.FirstName);
+    }
+
+    [TestMethod]
+    public void ReverseMap_Ignore_ShouldMapInBothDirections()
+    {
+        var config = new MappingConfiguration<FluentSource, FluentTarget>();
+        config.ForMember(d => d.Phone, opt => opt.Ignore());
+
+        var reverseConfig = config.ReverseMap();
+
+        var source = new FluentSource { FirstName = "Test", Phone = "shouldBeIgnored", Age = 20 };
+        var target = new FluentTarget { FullName = "", Phone = "shouldBeEmpty", Age = 20 };
+
+        // Forward: Phone should be ignored (default value)
+        var forwardPlan = MappingPlanBuilder.Build(config);
+        var forwardMapper = new Mapper<FluentSource, FluentTarget>(forwardPlan);
+        var forwardResult = forwardMapper.MapTo(source);
+        Assert.IsNotNull(forwardResult);
+        Assert.AreEqual(string.Empty, forwardResult.Phone);
+
+        // Reverse: Phone should also be ignored
+        var reversePlan = MappingPlanBuilder.Build(reverseConfig);
+        var reverseMapper = new Mapper<FluentTarget, FluentSource>(reversePlan);
+        var reverseResult = reverseMapper.MapTo(target);
+        Assert.IsNotNull(reverseResult);
+        Assert.AreEqual(string.Empty, reverseResult.Phone);
+    }
+
+    [TestMethod]
+    public void ReverseMap_MapFromDifferentNames_ShouldReverseCorrectly()
+    {
+        // 测试不同属性名的双向映射
+        var config = new MappingConfiguration<FluentSource, FluentTarget>();
+        config.ForMember(d => d.FullName, opt => opt.MapFrom(s => s.FirstName));
+        config.ForMember(d => d.ContactEmail, opt => opt.MapFrom(s => s.Email));
+
+        var reverseConfig = config.ReverseMap();
+
+        // Forward: FluentSource -> FluentTarget
+        var forwardPlan = MappingPlanBuilder.Build(config);
+        var forwardMapper = new Mapper<FluentSource, FluentTarget>(forwardPlan);
+        var src = new FluentSource { FirstName = "Leon", Email = "leon@test.com" };
+        var fwd = forwardMapper.MapTo(src);
+        Assert.IsNotNull(fwd);
+        Assert.AreEqual("Leon", fwd.FullName);
+        Assert.AreEqual("leon@test.com", fwd.ContactEmail);
+
+        // Reverse: FluentTarget -> FluentSource
+        var reversePlan = MappingPlanBuilder.Build(reverseConfig);
+        var reverseMapper = new Mapper<FluentTarget, FluentSource>(reversePlan);
+        var tgt = new FluentTarget { FullName = "Reverse", ContactEmail = "rev@test.com" };
+        var rev = reverseMapper.MapTo(tgt);
+        Assert.IsNotNull(rev);
+        Assert.AreEqual("Reverse", rev.FirstName);
+        Assert.AreEqual("rev@test.com", rev.Email);
+    }
+
+    [TestMethod]
+    public void ReverseMap_WithExpressionCompiler_ShouldWork()
+    {
+        var config = new MappingConfiguration<FluentSource, FluentTarget>();
+        config.ForMember(d => d.FullName, opt => opt.MapFrom(s => s.FirstName));
+
+        var reverseConfig = config.ReverseMap();
+        var reversePlan = MappingPlanBuilder.Build(reverseConfig);
+
+        // 验证使用 Expression 编译器（默认）正常工作
+        var mapper = new Mapper<FluentTarget, FluentSource>(reversePlan);
+        var target = new FluentTarget { FullName = "ExpressionTest" };
+        var result = mapper.MapTo(target);
+        Assert.IsNotNull(result);
+        Assert.AreEqual("ExpressionTest", result.FirstName);
+    }
+
+    [TestMethod]
+    public void ReverseMap_WithEmitCompiler_ShouldWork()
+    {
+        var config = new MappingConfiguration<FluentSource, FluentTarget>();
+        config.ForMember(d => d.FullName, opt => opt.MapFrom(s => s.FirstName));
+
+        var reverseConfig = config.ReverseMap();
+        var reversePlan = MappingPlanBuilder.Build(reverseConfig);
+
+        var originalType = MapperConfig.GetDefaultProcessType();
+        MapperConfig.SetConfiguration(ProcessTypeEnum.Emit, MapperConfig.GetDefaultConverterScope(), true);
+        try
+        {
+            var mapper = new Mapper<FluentTarget, FluentSource>(reversePlan);
+            var target = new FluentTarget { FullName = "EmitTest" };
+            var result = mapper.MapTo(target);
+            Assert.IsNotNull(result);
+            Assert.AreEqual("EmitTest", result.FirstName);
+        }
+        finally
+        {
+            MapperConfig.SetConfiguration(originalType, MapperConfig.GetDefaultConverterScope(), true);
+        }
+    }
+
+
+    [TestMethod]
+    public void ForMember_Condition_ValueType_ShouldReturnDefault_WithEmitCompiler()
+    {
+        // P2 regression test: Condition false + value type target should not throw
+        var source = new FluentSource { FirstName = "Test", Age = 15 };
+        var config = new MappingConfiguration<FluentSource, FluentTarget>();
+        config.ForMember(d => d.Age, opt =>
+        {
+            opt.Condition(src => src.Age > 18);
+            opt.MapFrom(s => s.Age * 2);
+        });
+
+        var plan = MappingPlanBuilder.Build(config);
+        var originalType = MapperConfig.GetDefaultProcessType();
+        MapperConfig.SetConfiguration(ProcessTypeEnum.Emit, MapperConfig.GetDefaultConverterScope(), true);
+        try
+        {
+            var mapper = new Mapper<FluentSource, FluentTarget>(plan);
+            var result = mapper.MapTo(source);
+            Assert.IsNotNull(result);
+            Assert.AreEqual(0, result.Age); // condition false -> default(int) = 0
+        }
+        finally
+        {
+            MapperConfig.SetConfiguration(originalType, MapperConfig.GetDefaultConverterScope(), true);
+        }
+    }
+
+    [TestMethod]
+    public void ForMember_Condition_ValueType_ShouldReturnDefault_WithExpressionCompiler()
+    {
+        // P2 regression test: Condition false + value type target with Expression compiler
+        var source = new FluentSource { FirstName = "Test", Age = 15 };
+        var mapper = new Mapper<FluentSource, FluentTarget>(cfg =>
+        {
+            cfg.ForMember(d => d.Age, opt =>
+            {
+                opt.Condition(src => src.Age > 18);
+                opt.MapFrom(s => s.Age * 2);
+            });
+        });
+        var result = mapper.MapTo(source);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(0, result.Age); // condition false -> default(int) = 0
+    }
+
+    #endregion
 }

@@ -9,6 +9,16 @@ using LeonMapper.Utils;
 namespace LeonMapper.Plan.Builder;
 
 /// <summary>
+/// Fluent API 动作：记录成员配置的完整信息
+/// </summary>
+internal readonly record struct FluentAction(
+    string TargetPropertyName,
+    MemberMappingActionType ActionType,
+    LambdaExpression? SourceExpression,
+    object? Converter,
+    LambdaExpression? ConditionExpression);
+
+/// <summary>
 /// 映射计划构建器：从源类型和目标类型生成 TypeMappingPlan
 /// </summary>
 public static class MappingPlanBuilder
@@ -73,7 +83,7 @@ public static class MappingPlanBuilder
         var cacheKey = (typeof(TSource), typeof(TTarget), options, configHash);
 
         var fluentActions = config?.GetMemberActions()
-            .Select(x => (x.TargetPropertyName, x.Option.ActionType, x.Option.SourceExpression, x.Option.Converter))
+            .Select(x => new FluentAction(x.TargetPropertyName, x.Option.ActionType, x.Option.SourceExpression, x.Option.Converter, x.Option.ConditionExpression))
             .ToList();
 
         return _planCache.GetOrAdd(cacheKey,
@@ -115,15 +125,29 @@ public static class MappingPlanBuilder
         Type sourceType,
         Type targetType,
         PlanBuildOptions options,
-        IReadOnlyList<(string TargetPropertyName, MemberMappingActionType ActionType, LambdaExpression? SourceExpression, object? Converter)>? fluentActions)
+        IReadOnlyList<FluentAction>? fluentActions)
     {
         // 属性映射
         var propertyPairs = DiscoverPropertyMappings(sourceType, targetType);
+
+        // 收集自定义表达式映射（MapFrom 的非成员表达式）
+        var customExpressionMappings = new List<(string TargetPropertyName, LambdaExpression SourceExpression, LambdaExpression? ConditionExpression)>();
 
         // Fluent API Pass 3：应用 Fluent 配置覆盖属性注解结果
         if (fluentActions != null && fluentActions.Count > 0)
         {
             ApplyFluentOverrides(propertyPairs, sourceType, targetType, fluentActions);
+
+            // 收集 MapFrom 中的非成员表达式（如 s => s.A + s.B）
+            foreach (var action in fluentActions)
+            {
+                if (action.ActionType == MemberMappingActionType.MapFrom
+                    && action.SourceExpression != null
+                    && action.SourceExpression.Body is not MemberExpression)
+                {
+                    customExpressionMappings.Add((action.TargetPropertyName, action.SourceExpression, action.ConditionExpression));
+                }
+            }
         }
 
         var propertyMappings = new List<MemberMapping>();
@@ -138,6 +162,15 @@ public static class MappingPlanBuilder
             var mapping = CreateMemberMapping(sourceProp, targetProp, options, fluentConverters);
             if (mapping != null)
             {
+                // 检查是否有 Condition 需要应用
+                var conditionExpr = FindConditionForTarget(fluentActions, targetProp.Name);
+                if (conditionExpr != null)
+                {
+                    mapping = new MemberMapping(mapping.SourceMember, mapping.TargetMember,
+                        mapping.Strategy, mapping.Converter, mapping.NestedPlan,
+                        null, conditionExpr);
+                }
+
                 propertyMappings.Add(mapping);
                 mappedSourceProps.Add(sourceProp.Name);
                 mappedTargetProps.Add(targetProp.Name);
@@ -159,6 +192,32 @@ public static class MappingPlanBuilder
                 mappedSourceFields.Add(sourceField.Name);
                 mappedTargetFields.Add(targetField.Name);
             }
+        }
+
+        // 自定义表达式映射（如 s => s.A + s.B, 常量等）
+        foreach (var (targetPropName, sourceExpr, conditionExpr) in customExpressionMappings)
+        {
+            var targetProp = targetType.GetProperty(targetPropName)
+                ?? targetType.GetFields().FirstOrDefault(f => f.Name == targetPropName) as MemberInfo;
+            if (targetProp == null)
+            {
+                continue;
+            }
+
+            // 找一个占位源成员（对于自定义表达式，编译时直接使用表达式而非源成员）
+            var sourceProp = sourceType.GetProperty(targetPropName);
+
+            // 跳过已被常规路径映射的目标属性（如同名匹配 + MapFrom 自定义表达式的场景）
+            if (mappedTargetProps.Contains(targetPropName))
+            {
+                // 移除常规路径的重复映射，以自定义表达式为准
+                propertyMappings.RemoveAll(m => m.TargetMember.Name == targetPropName);
+            }
+
+            var mapping = new MemberMapping(sourceProp, targetProp, MappingStrategy.Direct,
+                sourceExpr, conditionExpr);
+            propertyMappings.Add(mapping);
+            mappedTargetProps.Add(targetPropName);
         }
 
         // 收集未映射的源成员
@@ -209,40 +268,40 @@ public static class MappingPlanBuilder
         List<(PropertyInfo Source, PropertyInfo Target)> pairs,
         Type sourceType,
         Type targetType,
-        IReadOnlyList<(string TargetPropertyName, MemberMappingActionType ActionType, LambdaExpression? SourceExpression, object? Converter)> fluentActions)
+        IReadOnlyList<FluentAction> fluentActions)
     {
         var sourceProps = sourceType.GetProperties()
             .Where(p => p.CanRead && p.GetIndexParameters().Length == 0)
             .ToDictionary(p => p.Name, p => p);
 
         // 先处理 Ignore（移除映射）
-        foreach (var (targetPropName, actionType, _, _) in fluentActions)
+        foreach (var action in fluentActions)
         {
-            if (actionType == MemberMappingActionType.Ignore)
+            if (action.ActionType == MemberMappingActionType.Ignore)
             {
-                pairs.RemoveAll(p => p.Target.Name == targetPropName);
+                pairs.RemoveAll(p => p.Target.Name == action.TargetPropertyName);
             }
         }
 
-        // 处理 MapFrom 和 ConvertUsing
-        foreach (var (targetPropName, actionType, sourceExpr, converter) in fluentActions)
+        // 处理 MapFrom（仅简单成员表达式）和 ConvertUsing
+        foreach (var action in fluentActions)
         {
-            var targetProp = targetType.GetProperty(targetPropName);
+            var targetProp = targetType.GetProperty(action.TargetPropertyName);
             if (targetProp == null || !targetProp.CanWrite)
             {
                 continue;
             }
 
-            switch (actionType)
+            switch (action.ActionType)
             {
                 case MemberMappingActionType.MapFrom:
                 {
-                    if (sourceExpr?.Body is MemberExpression memberExpr)
+                    if (action.SourceExpression?.Body is MemberExpression memberExpr)
                     {
                         var sourcePropName = memberExpr.Member.Name;
                         if (sourceProps.TryGetValue(sourcePropName, out var sourceProp))
                         {
-                            pairs.RemoveAll(p => p.Target.Name == targetPropName);
+                            pairs.RemoveAll(p => p.Target.Name == action.TargetPropertyName);
                             pairs.Add((sourceProp, targetProp));
                         }
                     }
@@ -253,11 +312,11 @@ public static class MappingPlanBuilder
                 {
                     // ConvertUsing 不改变属性配对，只影响 CreateMemberMapping 的策略选择
                     // 确保目标属性有对应的源属性配对（可能是自动同名匹配的结果）
-                    var existingIdx = pairs.FindIndex(p => p.Target.Name == targetPropName);
+                    var existingIdx = pairs.FindIndex(p => p.Target.Name == action.TargetPropertyName);
                     if (existingIdx < 0)
                     {
                         // 目标属性没有配对，尝试同名匹配
-                        if (sourceProps.TryGetValue(targetPropName, out var sourceProp))
+                        if (sourceProps.TryGetValue(action.TargetPropertyName, out var sourceProp))
                         {
                             pairs.Add((sourceProp, targetProp));
                         }
@@ -273,7 +332,7 @@ public static class MappingPlanBuilder
     /// 从 Fluent 配置构建 ConvertUsing 查找表
     /// </summary>
     private static Dictionary<string, object>? BuildFluentConverterLookup(
-        IReadOnlyList<(string TargetPropertyName, MemberMappingActionType ActionType, LambdaExpression? SourceExpression, object? Converter)>? fluentActions)
+        IReadOnlyList<FluentAction>? fluentActions)
     {
         if (fluentActions == null || fluentActions.Count == 0)
         {
@@ -281,16 +340,39 @@ public static class MappingPlanBuilder
         }
 
         Dictionary<string, object>? lookup = null;
-        foreach (var (targetPropName, actionType, _, converter) in fluentActions)
+        foreach (var action in fluentActions)
         {
-            if (actionType == MemberMappingActionType.ConvertUsing && converter != null)
+            if (action.ActionType == MemberMappingActionType.ConvertUsing && action.Converter != null)
             {
                 lookup ??= new Dictionary<string, object>();
-                lookup[targetPropName] = converter;
+                lookup[action.TargetPropertyName] = action.Converter;
             }
         }
 
         return lookup;
+    }
+
+    /// <summary>
+    /// 查找指定目标成员是否有 Condition 条件
+    /// </summary>
+    private static LambdaExpression? FindConditionForTarget(
+        IReadOnlyList<FluentAction>? fluentActions,
+        string targetName)
+    {
+        if (fluentActions == null)
+        {
+            return null;
+        }
+
+        foreach (var action in fluentActions)
+        {
+            if (action.TargetPropertyName == targetName && action.ConditionExpression != null)
+            {
+                return action.ConditionExpression;
+            }
+        }
+
+        return null;
     }
 
     /// <summary>
